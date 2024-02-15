@@ -33,6 +33,8 @@
 
 - `\xbbF.` nearest to the header and thus the string after the `12 bytes` is the FolderName where the file is saved or made inside the system.
 - `None` in this case.
+- Stored just as same as starting with `\x00` and then stored as packed with it.
+
 
 #### 
 

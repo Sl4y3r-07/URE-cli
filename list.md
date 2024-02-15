@@ -13,7 +13,7 @@ Header properties fields:
 12. NameOffset
 13. SoftObjectPathsCount
 14. SoftObjectPathsOffset
-15. LocalizationId
+<!-- 15. LocalizationId -->
 16. GatherableTextDataCount
 17. GatherableTextDataOffset
 18. ExportCount
