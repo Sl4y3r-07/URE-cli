@@ -58,6 +58,81 @@ std::string EPackedFileTag(const std::vector<char>& file_bytes)
    return result;
 }
 
+std::string LegacyUE3Version(const std::vector<char>& file_bytes)
+{
+  char bytes[4];
+  std::copy(file_bytes.begin()+8, file_bytes.begin()+12, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  long long value= hexToDecimal(hexString);
+  std:: string result= std::to_string(value);
+     
+   return result;
+}
+std::string FileVersionUE4(const std::vector<char>& file_bytes)
+{
+  char bytes[4];
+  std::copy(file_bytes.begin()+12, file_bytes.begin()+16, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  long value= hexToDecimal(hexString);
+  std:: string result= std::to_string(value);
+     
+   return result;
+}
+std::string FileVersionUE5(const std::vector<char>& file_bytes)
+{
+  char bytes[4];
+  std::copy(file_bytes.begin()+16, file_bytes.begin()+20, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  long value= hexToDecimal(hexString);
+  std:: string result= std::to_string(value);
+     
+   return result;
+}
+int CustomVersionsCount(const std::vector<char>& file_bytes)
+{
+  char bytes[4];
+  std::copy(file_bytes.begin()+24, file_bytes.begin()+28, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  int value= hexToDecimal(hexString);
+  return value;
+}
+
+std::string FileVersionLicenseeUE4(const std::vector<char>& file_bytes)
+{
+  char bytes[4];
+  std::copy(file_bytes.begin()+20, file_bytes.begin()+24, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  long value= hexToDecimal(hexString);
+  std:: string result= std::to_string(value);                                                                 
+  return result;
+}
+
+long long HeaderSize(const std::vector<char>& file_bytes, int totalCustomVersionLength )
+{ char bytes[4];
+  std::copy(file_bytes.begin()+28+totalCustomVersionLength, file_bytes.begin()+28+totalCustomVersionLength+4, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  long long value= hexToDecimal(hexString);
+  return value;
+}
+std::string FolderName(const std::vector<char>& file_bytes, int totalCustomVersionLength)
+{
+  char bytes[4];
+  std::copy(file_bytes.begin()+28+totalCustomVersionLength+4, file_bytes.begin()+28+totalCustomVersionLength+8, bytes);
+  int length = hexToDecimal(little_to_big_endian(bytes));
+  std::string name(file_bytes.begin() + 28 + totalCustomVersionLength + 4 + 4,file_bytes.begin() + 28 + totalCustomVersionLength + 8 + length);
+  return name;
+}
+long long PackageFlags(const std::vector<char>& file_bytes, int totalCustomVersionLength){
+  char bytes[4];
+  std::copy(file_bytes.begin()+28+totalCustomVersionLength+4, file_bytes.begin()+28+totalCustomVersionLength+8, bytes);
+  int length = hexToDecimal(little_to_big_endian(bytes));
+  std::copy(file_bytes.begin()+28+totalCustomVersionLength+4+4+length, file_bytes.begin()+28+totalCustomVersionLength+8+length+4, bytes);
+  std::string hexString = little_to_big_endian(bytes);
+  long long value= hexToDecimal(hexString);
+  return value;
+}
+
+
 int main(int argc,char *argv[])
 {   if(argc<2)
     std::cout<<"Usage is ./header.exe {filename} "<<std::endl;
@@ -73,11 +148,26 @@ int main(int argc,char *argv[])
             file_buf.push_back(a);
             } 
           std::string header = Header(file_buf);
-          std::cout <<"Header is :- "<< header << std::endl;
+          std::cout <<"Header is : "<< header << std::endl;
           bool var = IsHeaderOk(header);
           if(var==1){
             std::cout<<"Valid Header of UASSET File"<<std::endl;
-            std::cout<<"EPackedFileTag is:- "<<EPackedFileTag(file_buf)<<std::endl;
+            std::cout<<"EPackedFileTag is: "<<EPackedFileTag(file_buf)<<std::endl;
+            std::cout<<"LegacyUE3Version is: "<< LegacyUE3Version(file_buf)<<std::endl;
+            std::cout<<"FileVersionUE4 is: "<< FileVersionUE4(file_buf)<<std::endl;
+            std::cout<<"FileVersionUE5 is: "<<FileVersionUE5(file_buf)<<std::endl;
+            std::cout<<"CustomVersions Count is: "<<CustomVersionsCount(file_buf)<<std::endl;
+
+            int VersionsCount = CustomVersionsCount(file_buf);
+            int total_versionKeys_length = VersionsCount*(4*4);
+            int total_version_bytes_length = VersionsCount*4;
+            int totalCustomVersionLength = total_versionKeys_length+ total_version_bytes_length;
+
+            std::cout<<"FileVersionLicenseeUE4 is: "<<FileVersionLicenseeUE4(file_buf)<<std::endl;
+            std::cout<<"Total Header Size is: "<<HeaderSize(file_buf, totalCustomVersionLength)<<std::endl;
+            std::cout<<"FolderName : "<<FolderName(file_buf, totalCustomVersionLength)<<std::endl;
+            std::cout<<"Package Flags : "<<PackageFlags(file_buf, totalCustomVersionLength)<<std::endl;
+
             }
           else{
             std::cout<<"Invalid Header"<<std::endl;

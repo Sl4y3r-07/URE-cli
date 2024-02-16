@@ -1,19 +1,19 @@
 Header properties fields:
 <!-- 1. EPackageFileTag -->
-2. LegacyFileVersion
-3. LegacyUE3Version
-4. FileVersionUE4
+2. LegacyFileVersion 
+<!-- 3. LegacyUE3Version -->
+<!-- 4. FileVersionUE4 -->
 <!-- 5. FileVersionUE5 -->
-6. FileVersionLicenseeUE4
-7. CustomVersions Count
-8. TotalHeaderSize
+<!-- 6. FileVersionLicenseeUE4 -->
+<!-- 7. CustomVersions Count -->
+<!-- 8. TotalHeaderSize -->
 <!-- 9. FolderName -->
-10. PackageFlags
-11. NameCount
-12. NameOffset
+<!-- 10. PackageFlags  -->
+11. NameCount [.]
+12. NameOffset [.]
 13. SoftObjectPathsCount
 14. SoftObjectPathsOffset
-<!-- 15. LocalizationId -->
+15. LocalizationId
 16. GatherableTextDataCount
 17. GatherableTextDataOffset
 18. ExportCount

@@ -8,20 +8,21 @@
 - need to explore terms mentioned in the description of the PS.
 
 
-## SEARCHING OFFSET SIBSTRINGS:
-
+## SEARCHING OFFSET SUBSTRINGS:
 #### Version and Main Program ClassName
 
 - `++UE<version>` + `+` + `<ClassName>`.
 
-#### "FileVersionUE5"
-
-- This is just after the Header bytes in big endian system format.
-- `17 and 18` offsets.
-
-#### "EPackageFileTag"
-
+#### "EPackageFileTag" [Done]
 - `First 4 bytes` of the file.
+#### LegacyUE3Version [Done]
+- 9th and 10th bytes
+#### FileVersionUE4 [Done]
+- 13th and 14th bytes
+#### FileVersionUE5 [Done]
+-  This is just after the Header bytes in big endian system format `17 and 18` offsets.
+#### CustomVersionsCount [Done]
+- `Most probably 25th byte`
 
 #### LocalizationId
 
@@ -36,5 +37,8 @@
 - Stored just as same as starting with `\x00` and then stored as packed with it.
 
 
-#### 
+#### 17-02-2024
+We need a type of counter that stores the current position, that will help to parse the data proceeding further.
+
+
 
