@@ -63,28 +63,44 @@ int main(int argc,char *argv[])
         std::string FileVersionLicenseeUE4;
         std::string GatherableTextDataOffset;
         std::string LocalizationId;
+        std::string HeaderSize;
         // std::string 
         char *waste_buf;
 
         header = finder(16,file);
         std::cout<<header<<std::endl;
         EpackedFileTag = little_to_big_endian(header.substr(0,8));
-        std::cout<<EpackedFileTag<<std::endl;
+        std::cout<<stoul(EpackedFileTag,0,16)<<std::endl;
+        std::cout<<(EpackedFileTag)<<std::endl;
         LegacyUE3Version = header.substr(8,8);
-        std::cout<<little_to_big_endian(LegacyUE3Version)<<std::endl;
+        // std::cout<<stoi(little_to_big_endian(LegacyUE3Version),0,16)<<std::endl;
         //FILEVERSIONUE4 IS WRONG
         // FileVersionUE4 = info_finder(4,file);
         // std::cout<<FileVersionUE4<<std::endl;
-        std::cout<<ftell(file)<<std::endl;
-        FileVersionUE5 = info_finder(4,file);
-        std::cout<<FileVersionUE5<<std::endl;
-        // fread(waste_buf,sizeof(char),sizeof(char)*4,file);
-        std::cout<<ftell(file)<<std::endl;
-        FileVersionLicenseeUE4 = info_finder(4,file);
-        std::cout<<FileVersionLicenseeUE4<<std::endl;
-        CustomVersionsCount = info_finder(4,file);
-        std::cout<<CustomVersionsCount<<std::endl;
+        // std::cout<<ftell(file)<<std::endl;
 
+        FileVersionUE5 = info_finder(4,file);
+        std::cout<<stoul(FileVersionUE5,0,16)<<std::endl;
+        // fread(waste_buf,sizeof(char),sizeof(char)*4,file);
+        // std::cout<<ftell(file)<<std::endl;
+
+
+        FileVersionLicenseeUE4 = info_finder(4,file);
+        // std::cout<<FileVersionLicenseeUE4<<std::endl;
+        std::cout<<stoul(FileVersionLicenseeUE4,0,16)<<std::endl;
+
+
+        CustomVersionsCount = info_finder(4,file);
+        // std::cout<<CustomVersionsCount<<std::endl;
+        unsigned long long versions = stoul(CustomVersionsCount,0,16); 
+        std::cout<<versions<<std::endl;
+        std::cout<<ftell(file)<<std::endl;
+
+        unsigned long long versionKeylength = versions*16;
+        unsigned long long total_version_bytes_length = versions*4;
+        int totalCustomVersionLength = versionKeylength + total_version_bytes_length;
+        fseek(file,ftell(file) + totalCustomVersionLength,SEEK_SET); 
+        std::cout<<ftell(file)<<std::endl;
         //after the filename pointer
 
         // GatherableTextDataOffset = info_finder(): 52-56
