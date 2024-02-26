@@ -40,5 +40,22 @@
 #### 17-02-2024
 We need a type of counter that stores the current position, that will help to parse the data proceeding further.
 
+#### 18-02-2024
+- "GatherableTextDataOffset": `2969` or  `(0xb99)` first non null byte after the `Localization ID`.
+The condition is if there is 0x1 or something like that between them then it is `GatherableTextDataCount`.
+
+- `ExportCount` is after this in the next set of 4 bytes.
+
+- `ImportCount` is in the next to next set of 4 bytes.
+
+- `ImportOffset` is in the next set of 4 bytes.
+
+- `NameCount` is in after 7  sets of 4 bytes.
+
+- 
+
+
+
+
 
 

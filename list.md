@@ -9,17 +9,17 @@ Header properties fields:
 <!-- 8. TotalHeaderSize -->
 <!-- 9. FolderName -->
 <!-- 10. PackageFlags  -->
-11. NameCount [.]
+<!-- 11. NameCount [.] -->
 12. NameOffset [.]
 13. SoftObjectPathsCount
 14. SoftObjectPathsOffset
-15. LocalizationId
-16. GatherableTextDataCount
-17. GatherableTextDataOffset
-18. ExportCount
+<!-- 15. LocalizationId -->
+<!-- 16. GatherableTextDataCount -->
+<!-- 17. GatherableTextDataOffset -->
+<!-- 18. ExportCount -->
 19. ExportOffset
-20. ImportCount
-21. ImportOffset
+<!-- 20. ImportCount -->
+<!-- 21. ImportOffset -->
 22. DependsOffset
 23. SoftPackageReferencesCount
 24. SoftPackageReferencesOffset
