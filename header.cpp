@@ -56,6 +56,7 @@ int main(int argc,char *argv[])
       else{
         std::string EpackedFileTag;
         std::string header;
+        std::string LegacyFileVersion;
         std::string LegacyUE3Version;
         std::string FileVersionUE5;
         std::string FileVersionUE4;
@@ -64,37 +65,25 @@ int main(int argc,char *argv[])
         std::string GatherableTextDataOffset;
         std::string LocalizationId;
         std::string HeaderSize;
-        // std::string 
-        char *waste_buf;
-
+   
         header = finder(16,file);
-        std::cout<<header<<std::endl;
+        std::cout<<"Header: "<<header<<std::endl;
         EpackedFileTag = little_to_big_endian(header.substr(0,8));
-        std::cout<<stoul(EpackedFileTag,0,16)<<std::endl;
-        std::cout<<(EpackedFileTag)<<std::endl;
-        LegacyUE3Version = header.substr(8,8);
-        // std::cout<<stoi(little_to_big_endian(LegacyUE3Version),0,16)<<std::endl;
-        //FILEVERSIONUE4 IS WRONG
-        // FileVersionUE4 = info_finder(4,file);
-        // std::cout<<FileVersionUE4<<std::endl;
-        // std::cout<<ftell(file)<<std::endl;
-
+        std::cout<<"EPackedFileTag: "<<stoul(EpackedFileTag,0,16)<<std::endl;
+        LegacyFileVersion = header.substr(8,8);
+        std::cout<<"LegacyFileVersion: "<<LegacyFileVersion<<std::endl;
+        LegacyUE3Version = header.substr(16,8);
+        std::cout<<"LegacyUE3Version: "<<stoi(little_to_big_endian(LegacyUE3Version),0,16)<<std::endl;
+        FileVersionUE4 = header.substr(24,8);
+        std::cout<<"FileVersionUE4: "<<stoi(little_to_big_endian(FileVersionUE4),0,16)<<std::endl;
         FileVersionUE5 = info_finder(4,file);
-        std::cout<<stoul(FileVersionUE5,0,16)<<std::endl;
-        // fread(waste_buf,sizeof(char),sizeof(char)*4,file);
-        // std::cout<<ftell(file)<<std::endl;
-
-
+        std::cout<<"FileVersionUE5: "<<stoul(FileVersionUE5,0,16)<<std::endl;
         FileVersionLicenseeUE4 = info_finder(4,file);
-        // std::cout<<FileVersionLicenseeUE4<<std::endl;
-        std::cout<<stoul(FileVersionLicenseeUE4,0,16)<<std::endl;
-
-
+        std::cout<<"FileVersionLicenseeUE: "<<stoul(FileVersionLicenseeUE4,0,16)<<std::endl;
         CustomVersionsCount = info_finder(4,file);
-        // std::cout<<CustomVersionsCount<<std::endl;
         unsigned long long versions = stoul(CustomVersionsCount,0,16); 
-        std::cout<<versions<<std::endl;
-        std::cout<<ftell(file)<<std::endl;
+        std::cout<<"CustomVersionsCount: "<<versions<<std::endl;
+        std::cout<<ftell(file)<<std::endl; 
 
         unsigned long long versionKeylength = versions*16;
         unsigned long long total_version_bytes_length = versions*4;
