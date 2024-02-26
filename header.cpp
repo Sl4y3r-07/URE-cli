@@ -52,7 +52,7 @@ std::string info_finder(int num,FILE* file)
 {
     return(little_to_big_endian(finder(num,file)));
 }
-void printNames(int NameOffset,int NameCount,FILE* file){
+void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE* file){
     fseek(file,NameOffset + 4,SEEK_SET);
     for(int i=0;i<NameCount;i++){
         std::string name;
@@ -74,6 +74,7 @@ void printNames(int NameOffset,int NameCount,FILE* file){
     }
 
 }
+
 
 int main(int argc,char *argv[])
 {   if(argc<2)
@@ -98,12 +99,10 @@ int main(int argc,char *argv[])
         std::string HeaderSize;
         std::string FolderName;
         std::string PackageFlags;
-        // std::string NameCount;
-        // std::string NameOffset;
 
 
-        int NameCount;
-        int NameOffset;
+        unsigned long long NameCount;
+        unsigned long long NameOffset;
 
    
         header = finder(16,file);
@@ -148,17 +147,19 @@ int main(int argc,char *argv[])
 
         PackageFlags = info_finder(4,file);
         std::cout<<"PackageFlags: "<<stoul((PackageFlags),0,16)<<std::endl;
-        NameCount = stoi(info_finder(4,file));
+
+        NameCount = stoul(info_finder(4,file),0,16);
         std::cout<<"NameCount: "<<NameCount<<std::endl; 
-        NameOffset = stoi(info_finder(4,file),0,16);
+
+        NameOffset = stoul(info_finder(4,file),0,16);
         std::cout<<"NameOffset: "<<NameOffset<<std::endl; 
         long int pos= fseek(file,ftell(file)+4,SEEK_SET);
         //Localization ID
         //first name from 502-540
         std::cout<<"Names: "<<std::endl;
-        printNames(NameOffset,10,file); //NameCount will be the required argument
+        printNames(NameOffset,NameCount,file); //NameCount will be the required argument
 
-        
+
 
 
 
