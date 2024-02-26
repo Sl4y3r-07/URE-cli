@@ -1,6 +1,6 @@
 Header properties fields:
 <!-- 1. EPackageFileTag -->
-2. LegacyFileVersion 
+<!-- 2. LegacyFileVersion  -->
 <!-- 3. LegacyUE3Version -->
 <!-- 4. FileVersionUE4 -->
 <!-- 5. FileVersionUE5 -->
@@ -9,20 +9,20 @@ Header properties fields:
 <!-- 8. TotalHeaderSize -->
 <!-- 9. FolderName -->
 <!-- 10. PackageFlags  -->
-<!-- 11. NameCount [.] -->
-12. NameOffset [.]
+<!-- 11. NameCount -->
+<!-- 12. NameOffset  -->
 13. SoftObjectPathsCount
 14. SoftObjectPathsOffset
 <!-- 15. LocalizationId -->
 <!-- 16. GatherableTextDataCount -->
 <!-- 17. GatherableTextDataOffset -->
 <!-- 18. ExportCount -->
-19. ExportOffset
-<!-- 20. ImportCount -->
+<!-- 19. ExportOffset -->
+<!-- 20. ImportCount  -->
 <!-- 21. ImportOffset -->
-22. DependsOffset
-23. SoftPackageReferencesCount
-24. SoftPackageReferencesOffset
+<!-- 22. DependsOffset -->
+<!-- 23. SoftPackageReferencesCount -->
+<!-- 24. SoftPackageReferencesOffset -->
 25. SearchableNamesOffset
 26. ThumbnailTableOffset
 27. Guid
@@ -46,7 +46,7 @@ Header properties fields:
 45. PayloadTocOffset
 46. DataResourceOffset
 Blueprint aspect list:
-1. Names
+<!-- 1. Names -->
 2. GatherableTextData
 3. Imports
 4. Exports

@@ -52,6 +52,17 @@ std::string info_finder(int num,FILE* file)
 {
     return(little_to_big_endian(finder(num,file)));
 }
+
+int bytes_detector(std::string bytes,long int pos,FILE* file)
+{   std::string file_bytes = finder(4,file);   
+    while(file_bytes!=bytes)
+    {   pos+=4;
+        fseek(file,ftell(file) + 4,SEEK_SET); 
+        file_bytes =finder(4,file);
+    }
+  return pos;
+}
+
 void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE* file){
     fseek(file,NameOffset + 4,SEEK_SET);
     for(int i=0;i<NameCount;i++){
@@ -75,7 +86,6 @@ void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE*
 
 }
 
-
 int main(int argc,char *argv[])
 {   if(argc<2)
     std::cout<<"Usage is ./header.exe {filename} "<<std::endl;
@@ -95,16 +105,22 @@ int main(int argc,char *argv[])
         std::string CustomVersionsCount;
         std::string FileVersionLicenseeUE4;
         std::string GatherableTextDataOffset;
+        std::string GatherableTextDataCount;
         std::string LocalizationId;
         std::string HeaderSize;
         std::string FolderName;
         std::string PackageFlags;
-
+        std::string ExportCount;
+        std::string ExportOffset;
+        std::string ImportCount;
+        std::string ImportOffset;
+        std::string DependsOffset;
+        std::string SoftPackageReferencesCount;
+        std::string SoftPackageReferencesOffset;
 
         unsigned long long NameCount;
         unsigned long long NameOffset;
 
-   
         header = finder(16,file);
         std::cout<<"Header: "<<header<<std::endl;
         EpackedFileTag = little_to_big_endian(header.substr(0,8));
@@ -118,50 +134,56 @@ int main(int argc,char *argv[])
         FileVersionUE5 = info_finder(4,file);
         std::cout<<"FileVersionUE5: "<<stoul(FileVersionUE5,0,16)<<std::endl;
         FileVersionLicenseeUE4 = info_finder(4,file);
-        std::cout<<"FileVersionLicenseeUE: "<<stoul(FileVersionLicenseeUE4,0,16)<<std::endl;
+        std::cout<<"FileVersionLicenseeUE4: "<<stoul(FileVersionLicenseeUE4,0,16)<<std::endl;
         CustomVersionsCount = info_finder(4,file);
         unsigned long long versions = stoul(CustomVersionsCount,0,16); 
         std::cout<<"CustomVersionsCount: "<<versions<<std::endl;
-        std::cout<<ftell(file)<<std::endl; 
+        ftell(file); 
 
         unsigned long long versionKeylength = versions*16;
         unsigned long long total_version_bytes_length = versions*4;
         int totalCustomVersionLength = versionKeylength + total_version_bytes_length;
-        std::cout<<"1: "<<totalCustomVersionLength<<std::endl;
-        std::cout<<"2: "<<versionKeylength<<std::endl;
-        std::cout<<"3: "<<total_version_bytes_length<<std::endl;
         fseek(file,ftell(file) + totalCustomVersionLength,SEEK_SET); 
-        std::cout<<ftell(file)<<std::endl;
+        ftell(file);
 
         HeaderSize = info_finder(4,file);
-        std::cout<<stoul(HeaderSize,0,16)<<std::endl;
-        std::cout<<ftell(file)<<std::endl;
-
+        std::cout<<"Total Header Size: "<<stoul(HeaderSize,0,16)<<std::endl;
         unsigned long long FolderNameSize = stoul(info_finder(4,file),0,16);
-        std::cout<<FolderNameSize<<std::endl;
-        std::cout<<ftell(file)<<std::endl;
-
         FolderName = finder(FolderNameSize,file).substr(0,FolderNameSize*2-2);
-        std::cout<<hexToAscii(FolderName)<<std::endl;
-        std::cout<<ftell(file)<<std::endl;
-
+        std::cout<<"FolderName: "<<hexToAscii(FolderName)<<std::endl;
         PackageFlags = info_finder(4,file);
         std::cout<<"PackageFlags: "<<stoul((PackageFlags),0,16)<<std::endl;
-
-        NameCount = stoul(info_finder(4,file),0,16);
+        NameCount = stoi(info_finder(4,file),0,16);
         std::cout<<"NameCount: "<<NameCount<<std::endl; 
-
-        NameOffset = stoul(info_finder(4,file),0,16);
+        NameOffset = stoi(info_finder(4,file),0,16);
         std::cout<<"NameOffset: "<<NameOffset<<std::endl; 
-        long int pos= fseek(file,ftell(file)+4,SEEK_SET);
-        //Localization ID
-        //first name from 502-540
+        long int pos= ftell(file); 
+        std::string Localisation_prefix = "21000000";
+        bytes_detector(Localisation_prefix,pos,file);
+        LocalizationId = finder(32,file);
+        std::cout<<"LocalisationID: "<<hexToAscii(LocalizationId)<<std::endl;
+      
+        fseek(file,ftell(file) + 1,SEEK_SET); //to skip the null byte
+        GatherableTextDataCount = info_finder(4,file);
+        std::cout<<"GatherableTextDataCount: "<<stoul(GatherableTextDataCount,0,16)<<std::endl;
+        GatherableTextDataOffset = info_finder(4,file);
+        std::cout<<"GatherableTextDataOffset: "<<stoul(GatherableTextDataOffset,0,16)<<std::endl;
+        ExportCount = info_finder(4,file);
+        std::cout<<"ExportCount: "<<stoi(ExportCount,0,16)<<std::endl;
+        ExportOffset = info_finder(4,file);
+        std::cout<<"ExportOffset: "<<stoul(ExportOffset,0,16)<<std::endl; 
+        ImportCount = info_finder(4,file);
+        std::cout<<"ImportCount: "<<stoi(ImportCount,0,16)<<std::endl;
+        ImportOffset = info_finder(4,file);
+        std::cout<<"ImportOffset: "<<stoul(ImportOffset,0,16)<<std::endl;
+        DependsOffset = info_finder(4,file);
+        std::cout<<"DependsOffset: "<<stoul(DependsOffset,0,16)<<std::endl; 
+        SoftPackageReferencesCount = info_finder(4,file);
+        std::cout<<"SoftPackageReferencesCount: "<<stoul(SoftPackageReferencesCount,0,16)<<std::endl;
+        SoftPackageReferencesOffset = info_finder(4,file);
+        std::cout<<"SoftPackageReferencesOffset: "<<stoul(SoftPackageReferencesOffset,0,16)<<std::endl;
         std::cout<<"Names: "<<std::endl;
-        printNames(NameOffset,NameCount,file); //NameCount will be the required argument
-
-
-
-
+        printNames(NameOffset,NameCount,file);    
 
 
         
@@ -175,11 +197,6 @@ int main(int argc,char *argv[])
         //CompatibleWithEngineVersion = 
 
         //SavedByEngineVersion =  info_finder():_ 388  _ 408
-
-        //FOR EACH NAME:
-        //buffer = array of next 4 bytes+
-        //CasePreservingHash : last 2 bytes
-        //NonCasePreservingHash: first 2 bytes
 
         
 }
