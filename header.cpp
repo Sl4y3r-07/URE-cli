@@ -9,7 +9,11 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include "rapidjson/document.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/writer.h"
 #include <string>
+ 
 
 std::string hexToAscii(std::string s){
     std::string result;
@@ -28,7 +32,7 @@ std::string little_to_big_endian(std::string s)
         s1+=s.substr(i-2,2);
     }
     return s1;
-}
+}    
 std::string bytesToHex(const char* buffer, size_t length) {
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
@@ -52,7 +56,6 @@ std::string info_finder(int num,FILE* file)
 {
     return(little_to_big_endian(finder(num,file)));
 }
-
 int bytes_detector(std::string bytes,long int pos,FILE* file)
 {   std::string file_bytes = finder(4,file);   
     while(file_bytes!=bytes)
@@ -62,7 +65,50 @@ int bytes_detector(std::string bytes,long int pos,FILE* file)
     }
   return pos;
 }
+void printGatherableData(unsigned long long GatherableDataOffset,unsigned long long GatherableDataCount,FILE* file){
+    if(!GatherableDataCount){
+        std::cout<<"No Gatherable Text Data Available"<<std::endl;
+    }
+    
+    while(GatherableDataCount--){
+    std::string NamespaceName="";
+    std::string SourceString="";
+    std::string KeyName="";
+    std::string SiteDescription="";
+    int IsEditorOnly;
+    char ch;
+    
+    while((ch=getc(file))!=EOF && ch!='\x00'){
+        NamespaceName += ch;
+    }
+    fseek(file,4,SEEK_CUR);
 
+    while((ch=getc(file))!=EOF && ch!='\x00'){
+        SourceString += ch;
+    }
+    fseek(file,4,SEEK_CUR);
+
+    IsEditorOnly = stoi(info_finder(4,file));
+    fseek(file,4,SEEK_CUR);
+
+    while(ch=getc(file)!=EOF && ch!='\x00'){
+        KeyName += ch;
+    }
+    fseek(file,4,SEEK_CUR);
+
+    while(ch=getc(file)!=EOF && ch!='\x00'){
+        SiteDescription += ch;
+    }
+
+    std::cout<<"\tGatherable Text Data: "<<std::endl;
+    std::cout<<"\t\tNameSpaceName: "<<NamespaceName<<std::endl;
+    std::cout<<"\t\t\tSourceString: "<<SourceString<<std::endl;
+    std::cout<<"\t\t\tKeyName: "<<KeyName<<std::endl;
+    std::cout<<"\t\t\tIsEditorOnly: "<<IsEditorOnly<<std::endl;
+    std::cout<<"\t\t\tSite Description: "<<SiteDescription<<std::endl;
+    }
+
+}
 void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE* file){
     fseek(file,NameOffset + 4,SEEK_SET);
     for(int i=0;i<NameCount;i++){
@@ -98,10 +144,23 @@ void Generations(int GenerationCount,FILE* file){
 }
     }
 }
-
 void SavedByEngineVersion(FILE* file)
 {
    std::cout<<"SavedByEngineVersion: "<<stoi(info_finder(2,file),0,16)<<std::endl;
+}
+void generateJSONdata() {
+    rapidjson::Document d;
+    d.SetObject();
+    FILE* file;
+    char* buffer  = new char();
+
+    d.AddMember("Name: ", "Mark", d.GetAllocator());
+    d.AddMember("Agr: ", "30", d.GetAllocator());
+    file = fopen("result.json", "w");
+
+    rapidjson::FileWriteStream os(file, buffer, sizeof(buffer));
+    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+    d.Accept(writer);
 }
 
 int main(int argc,char *argv[])
@@ -122,8 +181,6 @@ int main(int argc,char *argv[])
         std::string FileVersionUE4;
         std::string CustomVersionsCount;
         std::string FileVersionLicenseeUE4;
-        std::string GatherableTextDataOffset;
-        std::string GatherableTextDataCount;
         std::string LocalizationId;
         std::string HeaderSize;
         std::string FolderName;
@@ -143,6 +200,8 @@ int main(int argc,char *argv[])
         long int GenerationsCount;
         unsigned long long NameCount;
         unsigned long long NameOffset;
+        unsigned long long GatherableTextDataOffset;
+        unsigned long long GatherableTextDataCount;
 
         header = finder(16,file);
         std::cout<<"Header: "<<header<<std::endl;
@@ -187,10 +246,10 @@ int main(int argc,char *argv[])
         std::cout<<"LocalisationID: "<<hexToAscii(LocalizationId)<<std::endl;
       
         fseek(file,ftell(file) + 1,SEEK_SET); //to skip the null byte
-        GatherableTextDataCount = info_finder(4,file);
-        std::cout<<"GatherableTextDataCount: "<<stoul(GatherableTextDataCount,0,16)<<std::endl;
-        GatherableTextDataOffset = info_finder(4,file);
-        std::cout<<"GatherableTextDataOffset: "<<stoul(GatherableTextDataOffset,0,16)<<std::endl;
+        GatherableTextDataCount = stoul(info_finder(4,file),0,16);
+        std::cout<<"GatherableTextDataCount: "<<GatherableTextDataCount<<std::endl;
+        GatherableTextDataOffset = stoul(info_finder(4,file),0,16);
+        std::cout<<"GatherableTextDataOffset: "<<GatherableTextDataOffset<<std::endl;
         ExportCount = info_finder(4,file);
         std::cout<<"ExportCount: "<<stoi(ExportCount,0,16)<<std::endl;
         ExportOffset = info_finder(4,file);
@@ -219,20 +278,25 @@ int main(int argc,char *argv[])
         SavedByEngineVersion(file);
 
         std::cout<<"=============Names========"<<std::endl;
-        printNames(NameOffset,NameCount,file);    
 
+        printNames(NameOffset,NameCount,file);    
+        printGatherableData(GatherableTextDataOffset,GatherableTextDataCount,file);
+        generateJSONdata();
 
         
         //after the filename pointer
 
 
 
-        //AssetRegistryDataOffset = info_finder(): 190 - 222
-        // std::cout<<AssetRegistryDataOffset<<std::endl;
 
-        //CompatibleWithEngineVersion = 
+        //Now pointer
+        //gatherabletextData
+            //NamespaceName till '\x00'
+            // SourceData
+                // SourceString: +4 till'\x00'
+                    //SourceStringMetaData: 
+            // SourceKeycontexts
 
-        //SavedByEngineVersion =  info_finder():_ 388  _ 408
 
         
 }
