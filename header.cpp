@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
-#include "rapidjson/document.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/writer.h"
+// #include "rapidjson/document.h"
+// #include "rapidjson/filewritestream.h"
+// #include "rapidjson/writer.h"
 #include <string>
  
 
@@ -144,24 +144,61 @@ void Generations(int GenerationCount,FILE* file){
 }
     }
 }
-void SavedByEngineVersion(FILE* file)
-{
-   std::cout<<"SavedByEngineVersion: "<<stoi(info_finder(2,file),0,16)<<std::endl;
-}
-void generateJSONdata() {
-    rapidjson::Document d;
-    d.SetObject();
-    FILE* file;
-    char* buffer  = new char();
+void SavedByEngineVersion_CompatibleWithEngineVersion(FILE* file)
+{     
+    if ((info_finder(28,file))=="00000000000000000000000000000000000000000000000000000000")
+    {
+        std::cout<<"SavedByEngineVersion: "<< " "<<std::endl;
+        std::cout<<"CompatibleWithEngineVersion: "<< " "<<std::endl;
+        
+    }
 
-    d.AddMember("Name: ", "Mark", d.GetAllocator());
-    d.AddMember("Agr: ", "30", d.GetAllocator());
-    file = fopen("result.json", "w");
+    else{
+        fseek(file,ftell(file)-28,SEEK_SET);
+        std::string string;
+        string= std::to_string(stoi(info_finder(2,file),0,16))+"."+std::to_string(stoi(info_finder(2,file),0,16))+"."+std::to_string(stoi(info_finder(2,file),0,16));
+        std::reverse(string.begin(), string.end());
+        long long number=stoull(info_finder(4,file),0,16);
+        fseek(file,ftell(file)+4,SEEK_SET);
+        std::string version;
+        for(int i=1; ;i){
+          if((finder(i,file))=="00"){
+          break;}
+          fseek(file,ftell(file)-1,SEEK_SET);
+          version += hexToAscii(finder(i,file));
+        }
+        std::cout<<"SavedByEngineVersion: "<<string<<"-"<<number<<version<<std::endl;
+ 
+        string= std::to_string(stoi(info_finder(2,file),0,16))+"."+std::to_string(stoi(info_finder(2,file),0,16))+"."+std::to_string(stoi(info_finder(2,file),0,16));
+        std::reverse(string.begin(), string.end());
+        number=stoull(info_finder(4,file),0,16);
+        fseek(file,ftell(file)+4,SEEK_SET);
+        std::string version_1;
+        for(int i=1; ;i){
+          if((finder(i,file))=="00"){
+          break;}
+          fseek(file,ftell(file)-1,SEEK_SET);
+          version_1 += hexToAscii(finder(i,file));
+        }
+        std::cout<<"CompatibleWithEngineVersion: "<<string<<"-"<<number<<version_1<<std::endl;
+    }
 
-    rapidjson::FileWriteStream os(file, buffer, sizeof(buffer));
-    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
-    d.Accept(writer);
+
 }
+// void generateJSONdata() {
+//     rapidjson::Document d;
+//     d.SetObject();
+//     FILE* file;
+//     char* buffer  = new char();
+
+//     d.AddMember("Name: ", "Mark", d.GetAllocator());
+//     d.AddMember("Agr: ", "30", d.GetAllocator());
+//     file = fopen("result.json", "w");
+
+//     rapidjson::FileWriteStream os(file, buffer, sizeof(buffer));
+//     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+//     d.Accept(writer);
+// }
 
 int main(int argc,char *argv[])
 {   if(argc<2)
@@ -196,13 +233,24 @@ int main(int argc,char *argv[])
         std::string ThumbnailTableOffset;
         std::string GUID;
         std::string PersistentGUID;
+        std::string CompressedFlags;
+        std::string PackageSource;
+        std::string ChunkIDs;
+
         
         long int GenerationsCount;
         unsigned long long NameCount;
         unsigned long long NameOffset;
         unsigned long long GatherableTextDataOffset;
         unsigned long long GatherableTextDataCount;
-
+        long CompressedChunksCount;
+        unsigned long AssetRegistryDataOffset;
+        unsigned long long BulkDataStartOffset;
+        unsigned long long WorlTileInfoDataOffset;
+        signed long PreloadDependencyCount;
+        unsigned long long PreloadDependencyOffset;
+        unsigned long NamesReferencedFromExportDataCount;
+        signed long long PayloadTocOffset;
         header = finder(16,file);
         std::cout<<"Header: "<<header<<std::endl;
         EpackedFileTag = little_to_big_endian(header.substr(0,8));
@@ -275,30 +323,44 @@ int main(int argc,char *argv[])
         GenerationsCount=stoi(info_finder(4,file),0,16);
         std::cout<<"GenerationsCount: "<<GenerationsCount<<std::endl;
         Generations(GenerationsCount,file);
-        SavedByEngineVersion(file);
+        SavedByEngineVersion_CompatibleWithEngineVersion(file);
+        CompressedFlags = finder(4,file);
+        std::cout<<"CompressedFlags: "<< CompressedFlags<<std::endl;
+        CompressedChunksCount = stol(info_finder(4,file)); //isko bhi formatting krni hai
+        std::cout<<"CompressedChunksCount: "<<CompressedChunksCount<<std::endl;
+        PackageSource = info_finder(4,file);
+        std::cout<<"PackageSource: "<<stoll((PackageSource),0,16)<<std::endl;
+         fseek(file,ftell(file) + 4,SEEK_SET); // yaha pr shyd koi ek property hai. ya toh NumTexture Allocations hai ya AdditionalDatatoCook hai
+        AssetRegistryDataOffset= stoll(info_finder(4,file),0,16);
+        std::cout<<"AssetregistryDataOffset: "<<AssetRegistryDataOffset<<std::endl;
+        BulkDataStartOffset = stoll(info_finder(8,file),0,16);
+        std::cout<<"BulkDataStartOffset: "<<BulkDataStartOffset<<std::endl;
+        WorlTileInfoDataOffset = stoll(info_finder(4,file),0,16);
+        std::cout<<"WorlTileInfoDataOffset: "<<WorlTileInfoDataOffset<<std::endl;
+        ChunkIDs= finder(4,file); //ek baar ye chunk krke dekhna hai, isi byte pr milengi ids
+        std::cout<<"ChunkIDs: "<<ChunkIDs<<std::endl;
+        PreloadDependencyCount = stoll(info_finder(4,file),0,16);
+        std::cout<<"PreloadDependencyCount: "<<PreloadDependencyCount<<std::endl;
+        PreloadDependencyOffset = stoll(info_finder(4,file),0,16);
+        std::cout<<"PreloadDependencyOffset: "<<PreloadDependencyOffset<<std::endl;
+        NamesReferencedFromExportDataCount = stoll(info_finder(4,file),0,16);
+        std::cout<<"NamesReferencedFromExportDataCount: "<<NamesReferencedFromExportDataCount<<std::endl;
+        PayloadTocOffset=stoull(info_finder(8,file),0,16);
+        std::cout<<"PayloadTocOffset: "<<PayloadTocOffset<<std::endl;
 
-        std::cout<<"=============Names========"<<std::endl;
-
-        printNames(NameOffset,NameCount,file);    
-        printGatherableData(GatherableTextDataOffset,GatherableTextDataCount,file);
-        generateJSONdata();
-
+        // std::cout<<"=============Names========"<<std::endl;
+        // printNames(NameOffset,NameCount,file);    
+        // printGatherableData(GatherableTextDataOffset,GatherableTextDataCount,file);
         
+        // generateJSONdata();
         //after the filename pointer
-
-
-
-
         //Now pointer
         //gatherabletextData
             //NamespaceName till '\x00'
             // SourceData
                 // SourceString: +4 till'\x00'
                     //SourceStringMetaData: 
-            // SourceKeycontexts
-
-
-        
+            // SourceKeycontexts        
 }
-    }
+}
 }

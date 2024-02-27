@@ -29,21 +29,21 @@ Header properties fields:
 <!-- 28. PersistentGuid -->
 29. OwnerPersistentGuid
 <!-- 30. GenerationsCount & Generations -->
-31. SavedByEngineVersion (Major/Minor/Path/ChangeList/Branch)
+<!-- 31. SavedByEngineVersion (Major/Minor/Path/ChangeList/Branch) -->
 32. EngineChangeList
-33. CompatibleWithEngineVersion (Major/Minor/Path/ChangeList/Branch)
-34. CompressionFlags
-35. CompressedChunks Count
-36. PackageSource
+<!-- 33. CompatibleWithEngineVersion (Major/Minor/Path/ChangeList/Branch) -->
+<!-- 34. CompressionFlags -->
+<!-- 35. CompressedChunks Count -->
+<!-- 36. PackageSource -->
 37. NumTextureAllocations
-38. AssetRegistryDataOffset
-39. BulkDataStartOffset
-40. WorlTileInfoDataOffset
-41. ChunkIds Count
-42. PreloadDependencyCount
-43. PreloadDependencyOffset
-44. NamesReferencedFromExportDataCount
-45. PayloadTocOffset
+<!-- 38. AssetRegistryDataOffset -->
+<!-- 39. BulkDataStartOffset -->
+<!-- 40. WorlTileInfoDataOffset -->
+<!-- 41. ChunkIds Count -->
+<!-- 42. PreloadDependencyCount -->
+<!-- 43. PreloadDependencyOffset -->
+<!-- 44. NamesReferencedFromExportDataCount -->
+<!-- 45. PayloadTocOffset -->
 46. DataResourceOffset
 Blueprint aspect list:
 <!-- 1. Names -->
