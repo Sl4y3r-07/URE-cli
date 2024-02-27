@@ -83,7 +83,25 @@ void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE*
         std::cout<<"\t\tNonCasePreservingHash:\t"<<stoul(NonCasePreservingHash,0,16)<<std::endl;
         fseek(file,ftell(file)+4,SEEK_SET);
     }
+}
+void Generations(int GenerationCount,FILE* file){
+    std::string Generation;
+    std::string nameCount;
+    std::string exportCount;
+    if(GenerationCount>0){
+    for(int i =1;i<=GenerationCount;i++){
+        std::cout<<"\tGeneration "<<i<<std::endl;
+        exportCount = info_finder(4,file);
+        nameCount = info_finder(4,file);
+        std::cout<<"\t\texportCount:\t"<<stoul(exportCount,0,16)<<std::endl;
+        std::cout<<"\t\tnameCount:\t"<<stoul(nameCount,0,16)<<std::endl; 
+}
+    }
+}
 
+void SavedByEngineVersion(FILE* file)
+{
+   std::cout<<"SavedByEngineVersion: "<<stoi(info_finder(2,file),0,16)<<std::endl;
 }
 
 int main(int argc,char *argv[])
@@ -117,7 +135,12 @@ int main(int argc,char *argv[])
         std::string DependsOffset;
         std::string SoftPackageReferencesCount;
         std::string SoftPackageReferencesOffset;
-
+        std::string SearchableNamesOffset;
+        std::string ThumbnailTableOffset;
+        std::string GUID;
+        std::string PersistentGUID;
+        
+        long int GenerationsCount;
         unsigned long long NameCount;
         unsigned long long NameOffset;
 
@@ -182,7 +205,20 @@ int main(int argc,char *argv[])
         std::cout<<"SoftPackageReferencesCount: "<<stoul(SoftPackageReferencesCount,0,16)<<std::endl;
         SoftPackageReferencesOffset = info_finder(4,file);
         std::cout<<"SoftPackageReferencesOffset: "<<stoul(SoftPackageReferencesOffset,0,16)<<std::endl;
-        std::cout<<"Names: "<<std::endl;
+        SearchableNamesOffset= info_finder(4,file);
+        std::cout<<"SearchableNamesOffset: "<<stoul(SearchableNamesOffset,0,16)<<std::endl;
+        ThumbnailTableOffset=info_finder(4,file);
+        std::cout<<"ThumbnailTableOffset: "<<stoul(ThumbnailTableOffset,0,16)<<std::endl;
+        GUID = finder(16,file);
+        std::cout<<"GUID: "<<GUID<<std::endl;
+        PersistentGUID = finder(16,file);
+        std::cout<<"PersistentGUID: "<<PersistentGUID<<std::endl;
+        GenerationsCount=stoi(info_finder(4,file),0,16);
+        std::cout<<"GenerationsCount: "<<GenerationsCount<<std::endl;
+        Generations(GenerationsCount,file);
+        SavedByEngineVersion(file);
+
+        std::cout<<"=============Names========"<<std::endl;
         printNames(NameOffset,NameCount,file);    
 
 

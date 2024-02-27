@@ -23,12 +23,12 @@ Header properties fields:
 <!-- 22. DependsOffset -->
 <!-- 23. SoftPackageReferencesCount -->
 <!-- 24. SoftPackageReferencesOffset -->
-25. SearchableNamesOffset
-26. ThumbnailTableOffset
-27. Guid
-28. PersistentGuid
+<!-- 25. SearchableNamesOffset -->
+<!-- 26. ThumbnailTableOffset -->
+<!-- 27. Guid -->
+<!-- 28. PersistentGuid -->
 29. OwnerPersistentGuid
-30. GenerationsCount & Generations
+<!-- 30. GenerationsCount & Generations -->
 31. SavedByEngineVersion (Major/Minor/Path/ChangeList/Branch)
 32. EngineChangeList
 33. CompatibleWithEngineVersion (Major/Minor/Path/ChangeList/Branch)
