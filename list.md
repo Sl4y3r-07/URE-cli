@@ -52,7 +52,7 @@ Blueprint aspect list:
 4. Exports
 <!-- 5. Depends -->
 <!-- 6. SoftPackageReferences (bs isme us index se NameIndex pr Name read krna h)  -->
-7. SearchableNames
+<!-- 7. SearchableNames (ek file chaiye jisme dekhna hai, rest code is ok) -->
 <!-- 8. Thumbnails  -->
 <!-- 9. AssetRegistryData (including FiBData) (bs ek bt hai, kuch files me bad_alloc error de rha hai)-->
 10. WorldLevelData

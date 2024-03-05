@@ -274,6 +274,23 @@ for(int i=0;i<AssetDatacount;i++)
     }
 }
 }
+void SearchableNameOffset(long long SearchableNamesOffset, FILE* file){
+    fseek(file,SearchableNamesOffset,SEEK_SET);
+    long count= stol(info_finder(4,file),0,16);
+    int SearchableNamelength;
+    std::string SearchableName;
+    if(count==0){
+        std::cout<<"No Searchable Names present"<<std::endl;
+    }
+    else{
+    for(long i=0;i<count;i++)
+    {
+      SearchableNamelength = stoi(info_finder(4,file),0,16);
+      SearchableName = hexToAscii(finder(SearchableNamelength, file));
+      std::cout<<"\tSearchable Name: "<<SearchableName<<std::endl;
+    }
+}
+}
 // void generateJSONdata() {
 //     rapidjson::Document d;
 //     d.SetObject();
@@ -314,7 +331,6 @@ int main(int argc,char *argv[])
         std::string ExportOffset;
         std::string ImportCount;
         std::string ImportOffset;
-        std::string SearchableNamesOffset;
         std::string GUID;
         std::string PersistentGUID;
         std::string CompressedFlags;
@@ -329,6 +345,7 @@ int main(int argc,char *argv[])
         unsigned long int SoftPackageReferencesOffset;
         unsigned long long NameCount;
         unsigned long long NameOffset;
+        unsigned long long SearchableNamesOffset;
         unsigned long long GatherableTextDataOffset;
         unsigned long long int HeaderSize;
         unsigned long long GatherableTextDataCount;
@@ -401,8 +418,8 @@ int main(int argc,char *argv[])
         std::cout<<"SoftPackageReferencesCount: "<<SoftPackageReferencesCount<<std::endl;
         SoftPackageReferencesOffset = stoul(info_finder(4,file),0,16);
         std::cout<<"SoftPackageReferencesOffset: "<<SoftPackageReferencesOffset<<std::endl;
-        SearchableNamesOffset= info_finder(4,file);
-        std::cout<<"SearchableNamesOffset: "<<stoul(SearchableNamesOffset,0,16)<<std::endl;
+        SearchableNamesOffset= stoul(info_finder(4,file),0,16);
+        std::cout<<"SearchableNamesOffset: "<<SearchableNamesOffset<<std::endl;
         ThumbnailTableOffset=stoul(info_finder(4,file),0,16);
         std::cout<<"ThumbnailTableOffset: "<<ThumbnailTableOffset<<std::endl;
         GUID = finder(16,file);
@@ -442,6 +459,7 @@ int main(int argc,char *argv[])
         printNames(NameOffset,NameCount,file);  
         Depends(DependsOffset,file);  
         SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount,file);
+        SearchableNameOffset(SearchableNamesOffset,file);
         AssetRegistryData(AssetRegistryDataOffset,WorlTileInfoDataOffset,HeaderSize, file);
         // printGatherableData(GatherableTextDataOffset,GatherableTextDataCount,file);
         
