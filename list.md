@@ -50,11 +50,11 @@ Blueprint aspect list:
 2. GatherableTextData
 3. Imports
 4. Exports
-5. Depends
-6. SoftPackageReferences
+<!-- 5. Depends -->
+<!-- 6. SoftPackageReferences (bs isme us index se NameIndex pr Name read krna h)  -->
 7. SearchableNames
-8. Thumbnails
-9. AssetRegistryData (including FiBData)
+<!-- 8. Thumbnails  -->
+<!-- 9. AssetRegistryData (including FiBData) (bs ek bt hai, kuch files me bad_alloc error de rha hai)-->
 10. WorldLevelData
 11. PreloadDependency
 12. BulkData

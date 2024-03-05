@@ -124,7 +124,7 @@ void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE*
         }
         NonCasePreservingHash = info_finder(2,file);
         CasePreservingHash = info_finder(2,file);
-        std::cout<<"\tName "<<i<<"\t"<<name<<std::endl;
+        std::cout<<"\tName "<<i+1<<"\t"<<name<<std::endl;
         std::cout<<"\t\tCasePreservingHash:\t"<<stoul(CasePreservingHash,0,16)<<std::endl;
         std::cout<<"\t\tNonCasePreservingHash:\t"<<stoul(NonCasePreservingHash,0,16)<<std::endl;
         fseek(file,ftell(file)+4,SEEK_SET);
@@ -182,8 +182,97 @@ void SavedByEngineVersion_CompatibleWithEngineVersion(FILE* file)
         }
         std::cout<<"CompatibleWithEngineVersion: "<<string<<"-"<<number<<version_1<<std::endl;
     }
+}
+void Thumbnails(long int ThumbnailTableOffset,FILE* file){
+   fseek(file, ThumbnailTableOffset,SEEK_SET);
+   int Number = stoi(info_finder(4,file),0,16);
+   int ObjectClassNameLength;
+   int ObjectPathWithoutPackageLength;
+   std::string fileOffset;
+   std::string ObjectClassName;
+   std::string ObjectPathWithoutPackageName;
+   std::cout<<"Thumbnail Info"<<std::endl;
+   for (int i=0;i<Number;i++)
+   { 
+     std::cout<<"\tIndex: "<<i<<std::endl;
+     ObjectClassNameLength = stoi(info_finder(4,file),0,16);
+     ObjectClassName = hexToAscii(finder(ObjectClassNameLength,file));
+     ObjectPathWithoutPackageLength = stoi(info_finder(4,file),0,16);
+     ObjectPathWithoutPackageName = hexToAscii(finder(ObjectPathWithoutPackageLength,file));
+     fileOffset = info_finder(4,file);
+     std::cout<<"\t\tObjectClassName: "<<ObjectClassName<<std::endl;
+     std::cout<<"\t\tObjectPathWithoutPackageName: "<<ObjectPathWithoutPackageName<<std::endl;
+     std::cout<<"\t\tFileOffset: "<<fileOffset<<std::endl;
 
+   } 
+}
 
+void Depends(long int DependsOffset, FILE *file)
+{
+    fseek(file,DependsOffset,SEEK_SET);
+    signed long int FPackageIndex;
+    int Count = stoi(info_finder(4,file),0,16);
+    std::cout<<"Depends"<<std::endl;
+    if(Count!=0){
+    for(int i=0;i<Count;i++)
+    {
+        FPackageIndex = stoll(info_finder(4,file),0,16);
+        std::cout<<"\t\tFPackageIndex: "<<FPackageIndex<<std::endl;
+    }
+    }
+    else{
+         std::cout<<"\tNo Depends "<<std::endl;
+    }
+}
+
+void SoftPackageReferences(long int Offset, long int count, FILE* file)
+{   unsigned long long nameIndex;
+    fseek(file,Offset,SEEK_SET); 
+    std::cout<<"SoftPackageReferences: "<<std::endl;
+    if(count!=0){ 
+    for (long int i=0; i<count;i++){
+    nameIndex = stoull(info_finder(8,file),0,16);
+    std::cout<<"\t nameIndex: "<<nameIndex<<std::endl;
+    }
+}
+else{
+    std::cout<<"No SoftPAckageReferences "<<std::endl;
+}}
+
+void AssetRegistryData(long long int AssetRegistryDataOffset, long long int WorlTileInfoDataOffset, long long HeaderSize,FILE* file){
+long long int offset = HeaderSize;
+std::string ObjectPath; std::string ObjectClass;long int TagCount;
+std::string key; std::string value;
+
+fseek(file, AssetRegistryDataOffset,SEEK_SET);
+if (WorlTileInfoDataOffset>0){
+    offset = WorlTileInfoDataOffset;
+}
+unsigned long long int AssetRegistryDataSize = offset- AssetRegistryDataOffset;
+unsigned long long int DependencyDataOffset = stoll(info_finder(8,file),0,16);
+std::cout<<"DependecyDataOffset: "<<DependencyDataOffset<<std::endl;
+std::cout<<"AssetRegistryDataSize: "<<AssetRegistryDataSize<<std::endl;
+long AssetDatacount= stoll(info_finder(4,file),0,16);
+for(int i=0;i<AssetDatacount;i++)
+{
+    long int ObjectPathlength = stol(info_finder(4,file),0,16);
+    ObjectPath= hexToAscii(finder(ObjectPathlength,file));
+    std::cout<<"\tObjectPath: "<<ObjectPath<<std::endl;
+    long int ObjectClasslength= stol(info_finder(4,file),0,16);
+    ObjectClass= hexToAscii(finder(ObjectClasslength,file));
+    std::cout<<"\tObjectClass: "<<ObjectClass<<std::endl;
+    TagCount = stoll(info_finder(4,file),0,16);
+    std::cout<<"\tTagCount: "<<TagCount<<std::endl;
+    for(int j=0;j<TagCount;j++)
+    {   std::cout<<"\t\tTag: "<<j+1<<std::endl;
+        long int keylength= stoll(info_finder(4,file),0,16);
+        key = hexToAscii(finder( keylength,file));
+        std::cout<<"\t\tKey_tag: "<<key<<std::endl;
+        long int valuelength = stoll(info_finder(4,file),0,16);
+        value = hexToAscii(finder(valuelength,file)); 
+         std::cout<<"\t\tValue_tag: "<<value<<std::endl ;
+    }
+}
 }
 // void generateJSONdata() {
 //     rapidjson::Document d;
@@ -212,25 +301,20 @@ int main(int argc,char *argv[])
       else{
         std::string EpackedFileTag;
         std::string header;
-        std::string LegacyFileVersion;
         std::string LegacyUE3Version;
+        std::string LegacyFileVersion;
         std::string FileVersionUE5;
         std::string FileVersionUE4;
         std::string CustomVersionsCount;
         std::string FileVersionLicenseeUE4;
         std::string LocalizationId;
-        std::string HeaderSize;
         std::string FolderName;
         std::string PackageFlags;
         std::string ExportCount;
         std::string ExportOffset;
         std::string ImportCount;
         std::string ImportOffset;
-        std::string DependsOffset;
-        std::string SoftPackageReferencesCount;
-        std::string SoftPackageReferencesOffset;
         std::string SearchableNamesOffset;
-        std::string ThumbnailTableOffset;
         std::string GUID;
         std::string PersistentGUID;
         std::string CompressedFlags;
@@ -239,9 +323,14 @@ int main(int argc,char *argv[])
 
         
         long int GenerationsCount;
+        unsigned long DependsOffset;
+        unsigned long ThumbnailTableOffset;
+        unsigned long SoftPackageReferencesCount;
+        unsigned long int SoftPackageReferencesOffset;
         unsigned long long NameCount;
         unsigned long long NameOffset;
         unsigned long long GatherableTextDataOffset;
+        unsigned long long int HeaderSize;
         unsigned long long GatherableTextDataCount;
         long CompressedChunksCount;
         unsigned long AssetRegistryDataOffset;
@@ -276,8 +365,8 @@ int main(int argc,char *argv[])
         fseek(file,ftell(file) + totalCustomVersionLength,SEEK_SET); 
         ftell(file);
 
-        HeaderSize = info_finder(4,file);
-        std::cout<<"Total Header Size: "<<stoul(HeaderSize,0,16)<<std::endl;
+        HeaderSize = stoul(info_finder(4,file),0,16);
+        std::cout<<"Total Header Size: "<<HeaderSize<<std::endl;
         unsigned long long FolderNameSize = stoul(info_finder(4,file),0,16);
         FolderName = finder(FolderNameSize,file).substr(0,FolderNameSize*2-2);
         std::cout<<"FolderName: "<<hexToAscii(FolderName)<<std::endl;
@@ -306,16 +395,16 @@ int main(int argc,char *argv[])
         std::cout<<"ImportCount: "<<stoi(ImportCount,0,16)<<std::endl;
         ImportOffset = info_finder(4,file);
         std::cout<<"ImportOffset: "<<stoul(ImportOffset,0,16)<<std::endl;
-        DependsOffset = info_finder(4,file);
-        std::cout<<"DependsOffset: "<<stoul(DependsOffset,0,16)<<std::endl; 
-        SoftPackageReferencesCount = info_finder(4,file);
-        std::cout<<"SoftPackageReferencesCount: "<<stoul(SoftPackageReferencesCount,0,16)<<std::endl;
-        SoftPackageReferencesOffset = info_finder(4,file);
-        std::cout<<"SoftPackageReferencesOffset: "<<stoul(SoftPackageReferencesOffset,0,16)<<std::endl;
+        DependsOffset =stoul(info_finder(4,file),0,16);
+        std::cout<<"DependsOffset: "<<DependsOffset<<std::endl; 
+        SoftPackageReferencesCount =stoul( info_finder(4,file),0,16);
+        std::cout<<"SoftPackageReferencesCount: "<<SoftPackageReferencesCount<<std::endl;
+        SoftPackageReferencesOffset = stoul(info_finder(4,file),0,16);
+        std::cout<<"SoftPackageReferencesOffset: "<<SoftPackageReferencesOffset<<std::endl;
         SearchableNamesOffset= info_finder(4,file);
         std::cout<<"SearchableNamesOffset: "<<stoul(SearchableNamesOffset,0,16)<<std::endl;
-        ThumbnailTableOffset=info_finder(4,file);
-        std::cout<<"ThumbnailTableOffset: "<<stoul(ThumbnailTableOffset,0,16)<<std::endl;
+        ThumbnailTableOffset=stoul(info_finder(4,file),0,16);
+        std::cout<<"ThumbnailTableOffset: "<<ThumbnailTableOffset<<std::endl;
         GUID = finder(16,file);
         std::cout<<"GUID: "<<GUID<<std::endl;
         PersistentGUID = finder(16,file);
@@ -347,9 +436,13 @@ int main(int argc,char *argv[])
         std::cout<<"NamesReferencedFromExportDataCount: "<<NamesReferencedFromExportDataCount<<std::endl;
         PayloadTocOffset=stoull(info_finder(8,file),0,16);
         std::cout<<"PayloadTocOffset: "<<PayloadTocOffset<<std::endl;
-
-        // std::cout<<"=============Names========"<<std::endl;
-        // printNames(NameOffset,NameCount,file);    
+        
+        Thumbnails(ThumbnailTableOffset,file);
+        std::cout<<"=============Names========"<<std::endl;
+        printNames(NameOffset,NameCount,file);  
+        Depends(DependsOffset,file);  
+        SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount,file);
+        AssetRegistryData(AssetRegistryDataOffset,WorlTileInfoDataOffset,HeaderSize, file);
         // printGatherableData(GatherableTextDataOffset,GatherableTextDataCount,file);
         
         // generateJSONdata();
