@@ -47,17 +47,22 @@ Header properties fields:
 46. DataResourceOffset
 Blueprint aspect list:
 <!-- 1. Names -->
-2. GatherableTextData
-3. Imports
-4. Exports
+
+2. GatherableTextData (last name ke baad hai ye, everything is in sequence)
+4 bytes -> namespace length
+then name (including null byte)
+SourceData.SourceString length
+SourceData.SourceString 
+<!-- 3. Imports -->
+<!-- 4. Exports -->
 <!-- 5. Depends -->
-<!-- 6. SoftPackageReferences (bs isme us index se NameIndex pr Name read krna h)  -->
-<!-- 7. SearchableNames (ek file chaiye jisme dekhna hai, rest code is ok) -->
+<!-- 6. SoftPackageReferences  -->
+<!-- 7. SearchableNames  -->
 <!-- 8. Thumbnails  -->
-<!-- 9. AssetRegistryData (including FiBData) (bs ek bt hai, kuch files me bad_alloc error de rha hai)-->
+<!-- 9. AssetRegistryData (including FiBData) -->
 10. WorldLevelData
-11. PreloadDependency
-12. BulkData
+11. PreloadDependency  (isko dekhna pdega last step hai yeh)
+12. BulkData (isko bhi)
 13. Additional exports data written by WriteExports from SavePackage2.cpp and referenced
 by exports. (SerialSize & SerialOffset)
 14. File traile

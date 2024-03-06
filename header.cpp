@@ -9,11 +9,14 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <cstdlib>
+#include <string>
 // #include "rapidjson/document.h"
 // #include "rapidjson/filewritestream.h"
 // #include "rapidjson/writer.h"
-#include <string>
  
+
+std::vector<std::string> Names;
 
 std::string hexToAscii(std::string s){
     std::string result;
@@ -41,7 +44,7 @@ std::string bytesToHex(const char* buffer, size_t length) {
     }
     return ss.str();
 }
-std::string finder(int num,FILE *file){
+std::string finder(long long num,FILE *file){
     char *buf = new char[num];
     //allocation helps me to not look for the null terminated strings but resolve the problem as it now allocates a new space for the buffer obtained
     int bytes_read = fread(buf,sizeof(char),num*sizeof(char),file);
@@ -124,7 +127,8 @@ void printNames(unsigned long long NameOffset,unsigned long long NameCount,FILE*
         }
         NonCasePreservingHash = info_finder(2,file);
         CasePreservingHash = info_finder(2,file);
-        std::cout<<"\tName "<<i+1<<"\t"<<name<<std::endl;
+        std::cout<<"\tName "<<i<<"\t"<<name<<std::endl;
+        Names.push_back(name);
         std::cout<<"\t\tCasePreservingHash:\t"<<stoul(CasePreservingHash,0,16)<<std::endl;
         std::cout<<"\t\tNonCasePreservingHash:\t"<<stoul(NonCasePreservingHash,0,16)<<std::endl;
         fseek(file,ftell(file)+4,SEEK_SET);
@@ -152,7 +156,6 @@ void SavedByEngineVersion_CompatibleWithEngineVersion(FILE* file)
         std::cout<<"CompatibleWithEngineVersion: "<< " "<<std::endl;
         
     }
-
     else{
         fseek(file,ftell(file)-28,SEEK_SET);
         std::string string;
@@ -233,6 +236,7 @@ void SoftPackageReferences(long int Offset, long int count, FILE* file)
     for (long int i=0; i<count;i++){
     nameIndex = stoull(info_finder(8,file),0,16);
     std::cout<<"\t nameIndex: "<<nameIndex<<std::endl;
+    std::cout<<"\t Name: "<<Names[nameIndex]<<std::endl;
     }
 }
 else{
@@ -268,9 +272,15 @@ for(int i=0;i<AssetDatacount;i++)
         long int keylength= stoll(info_finder(4,file),0,16);
         key = hexToAscii(finder( keylength,file));
         std::cout<<"\t\tKey_tag: "<<key<<std::endl;
-        long int valuelength = stoll(info_finder(4,file),0,16);
+
+        signed long valuelength = stoll(info_finder(4,file),0,16);
+        std::cout<<"\t\tvallength: "<<valuelength<<std::endl;
+        if(valuelength<0)
+        {
+            valuelength = 2 * abs(valuelength);
+        }
         value = hexToAscii(finder(valuelength,file)); 
-         std::cout<<"\t\tValue_tag: "<<value<<std::endl ;
+        std::cout<<"\t\tValue_tag: "<<value<<std::endl ;
     }
 }
 }
@@ -291,6 +301,102 @@ void SearchableNameOffset(long long SearchableNamesOffset, FILE* file){
     }
 }
 }
+void Imports(unsigned long long  ImportCount, unsigned long long ImportOffset,FILE* file)
+{  std::cout<<"Imports "<<std::endl;
+   signed long  outerIndex;
+   fseek(file,ImportOffset,SEEK_SET);
+   for(int i=0;i<ImportCount;i++){
+    std::cout<<"\timport: "<<i<<std::endl;
+   unsigned long long classPackageIndex =stoull(info_finder(8,file),0,16);
+    std::cout<<"\t\tClassPackage: "<<Names[classPackageIndex]<<std::endl;
+   unsigned long long classNameIndex = stoull(info_finder(8,file),0,16);
+   std::cout<<"\t\tClassName: "<<Names[classNameIndex]<<std::endl;
+   outerIndex = stoll(info_finder(4,file),0,16);
+   std::cout<<"\t\touterIndex: "<<outerIndex<<std::endl;
+   unsigned long long objectNameIndex = stoull(info_finder(8,file),0,16);
+   std::cout<<"\t\tObjectName: "<<Names[objectNameIndex]<<std::endl;
+   unsigned long long packageNameIndex = stoll(info_finder(4,file),0,16);
+   std::cout<<"\t\tPackageName: "<<Names[packageNameIndex]<<std::endl;
+   unsigned long long bImportOptional =stoll(info_finder(4,file),0,16);
+   std::cout<<"\t\tbImportOptional: "<<bImportOptional<<std::endl;
+   fseek(file,ftell(file) + 4,SEEK_SET);
+}
+}
+void Exports(long long Offset,long long count, FILE* file){
+     std::cout<<"Export: "<<std::endl;
+    signed long ClassIndex;
+    signed long SuperIndex;
+    signed long TemplateIndex;
+    signed long OuterIndex;
+    std::string ObjectName;
+    signed long ObjectFlags;
+    long long SerialSize;
+    long long SerialOffset;
+    signed long bForcedExport;
+    signed long bNotForClient;
+    signed long bNotForServer;
+    std::string packageGuid;
+    signed long packageFlags;
+    signed long  bNotAlwaysLoadedForEditorGame;
+    signed long  bIsAsset;
+    signed long  bGeneratePublicHash;
+    signed long  FirstExportDependency;
+    signed long  SerializationBeforeSerializationDependency;
+    signed long  createBeforeSerializationDependency;
+    signed long  serializationBeforeCreateDependency;
+    signed long  createBeforeCreateDependency;
+    fseek(file,Offset,SEEK_SET);
+    for(int i=0;i<count;i++){
+     
+        std::cout<<"\tExport: "<<i<<std::endl;
+        ClassIndex = stoll(info_finder(4,file),0,16);
+        SuperIndex = stoll(info_finder(4,file),0,16);
+    std::cout<<"\t\tClassIndex:\t"<<ClassIndex<<std::endl;
+    std::cout<<"\t\tSuperIndex:\t"<<SuperIndex<<std::endl;
+        TemplateIndex = stoll(info_finder(4,file),0,16);
+        OuterIndex = stoll(info_finder(4,file),0,16);
+        long long index = stoll(info_finder(8,file),0,16);
+        ObjectName = Names[index];
+        ObjectFlags = stoll(info_finder(4,file),0,16);
+        SerialSize = stoll(info_finder(8,file),0,16);
+        SerialOffset = stoull(info_finder(8,file),0,16);
+        bForcedExport = stoll(info_finder(4,file),0,16);
+        bNotForClient = stoll(info_finder(4,file),0,16);
+        bNotForServer = stoll(info_finder(4,file),0,16);
+        packageGuid = info_finder(16,file);
+        packageFlags = stoll(info_finder(4,file),0,16);
+        bNotAlwaysLoadedForEditorGame = stoll(info_finder(4,file),0,16);
+        bIsAsset = stoll(info_finder(4,file),0,16);
+        bGeneratePublicHash = stoll(info_finder(4,file),0,16);
+        FirstExportDependency = stoll(info_finder(4,file),0,16);
+        SerializationBeforeSerializationDependency = stoll(info_finder(4,file),0,16);
+        createBeforeSerializationDependency = stoll(info_finder(4,file),0,16);
+        serializationBeforeCreateDependency = stoll(info_finder(4,file),0,16);
+        createBeforeCreateDependency = stoll(info_finder(4,file),0,16);
+
+
+    std::cout<<"\t\tTemplateIndex:\t"<<TemplateIndex<<std::endl;
+    std::cout<<"\t\tOuterIndex:\t"<<OuterIndex<<std::endl;
+    std::cout<<"\t\tObjectName:\t"<<ObjectName<<std::endl;
+    std::cout<<"\t\tObjectFlags:\t"<<ObjectFlags<<std::endl;
+    std::cout<<"\t\tSerialSize:\t"<<SerialSize<<std::endl;
+    std::cout<<"\t\tSerialOffset:\t"<<SerialOffset<<std::endl;
+    std::cout<<"\t\tbForcedExport:\t"<<bForcedExport<<std::endl;
+    std::cout<<"\t\tbNotForClient:\t"<<bNotForClient<<std::endl;
+    std::cout<<"\t\tbNotForServer:\t"<<bNotForServer<<std::endl;
+    std::cout<<"\t\tpackageGuid:\t"<<packageGuid<<std::endl;
+    std::cout<<"\t\tpackageFlags:\t"<<packageFlags<<std::endl;
+    std::cout<<"\t\tbNotAlwaysLoadedForEditorGame:\t"<<bNotAlwaysLoadedForEditorGame<<std::endl;
+    std::cout<<"\t\tbIsAsset:\t"<<bIsAsset<<std::endl;
+    std::cout<<"\t\tbGeneratePublicHash:\t"<<bGeneratePublicHash<<std::endl;
+    std::cout<<"\t\tFirstExportDependency:\t"<<FirstExportDependency<<std::endl;
+    std::cout<<"\t\tSerializationBeforeSerializationDependency:\t"<<SerializationBeforeSerializationDependency<<std::endl;
+    std::cout<<"\t\tcreateBeforeSerializationDependency:\t"<<createBeforeSerializationDependency<<std::endl;
+    std::cout<<"\t\tserializationBeforeCreateDependency:\t"<<serializationBeforeCreateDependency<<std::endl;
+    std::cout<<"\t\tcreateBeforeCreateDependency:\t"<<createBeforeCreateDependency<<std::endl;
+    }
+}
+
 // void generateJSONdata() {
 //     rapidjson::Document d;
 //     d.SetObject();
@@ -327,10 +433,6 @@ int main(int argc,char *argv[])
         std::string LocalizationId;
         std::string FolderName;
         std::string PackageFlags;
-        std::string ExportCount;
-        std::string ExportOffset;
-        std::string ImportCount;
-        std::string ImportOffset;
         std::string GUID;
         std::string PersistentGUID;
         std::string CompressedFlags;
@@ -342,6 +444,10 @@ int main(int argc,char *argv[])
         unsigned long DependsOffset;
         unsigned long ThumbnailTableOffset;
         unsigned long SoftPackageReferencesCount;
+        unsigned long long ImportOffset;
+        unsigned long long ImportCount;
+        unsigned long long ExportCount;
+        unsigned long long ExportOffset;
         unsigned long int SoftPackageReferencesOffset;
         unsigned long long NameCount;
         unsigned long long NameOffset;
@@ -404,14 +510,14 @@ int main(int argc,char *argv[])
         std::cout<<"GatherableTextDataCount: "<<GatherableTextDataCount<<std::endl;
         GatherableTextDataOffset = stoul(info_finder(4,file),0,16);
         std::cout<<"GatherableTextDataOffset: "<<GatherableTextDataOffset<<std::endl;
-        ExportCount = info_finder(4,file);
-        std::cout<<"ExportCount: "<<stoi(ExportCount,0,16)<<std::endl;
-        ExportOffset = info_finder(4,file);
-        std::cout<<"ExportOffset: "<<stoul(ExportOffset,0,16)<<std::endl; 
-        ImportCount = info_finder(4,file);
-        std::cout<<"ImportCount: "<<stoi(ImportCount,0,16)<<std::endl;
-        ImportOffset = info_finder(4,file);
-        std::cout<<"ImportOffset: "<<stoul(ImportOffset,0,16)<<std::endl;
+        ExportCount = stol(info_finder(4,file),0,16);
+        std::cout<<"ExportCount: "<<ExportCount<<std::endl;
+        ExportOffset =  stoul(info_finder(4,file),0,16);
+        std::cout<<"ExportOffset: "<<ExportOffset<<std::endl; 
+        ImportCount = stoi( info_finder(4,file),0,16);
+        std::cout<<"ImportCount: "<<ImportCount<<std::endl;
+        ImportOffset = stoul(info_finder(4,file),0,16);
+        std::cout<<"ImportOffset: "<<ImportOffset<<std::endl;
         DependsOffset =stoul(info_finder(4,file),0,16);
         std::cout<<"DependsOffset: "<<DependsOffset<<std::endl; 
         SoftPackageReferencesCount =stoul( info_finder(4,file),0,16);
@@ -461,6 +567,8 @@ int main(int argc,char *argv[])
         SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount,file);
         SearchableNameOffset(SearchableNamesOffset,file);
         AssetRegistryData(AssetRegistryDataOffset,WorlTileInfoDataOffset,HeaderSize, file);
+        Imports(ImportCount, ImportOffset,file);
+        Exports(ExportOffset,ExportCount,file);
         // printGatherableData(GatherableTextDataOffset,GatherableTextDataCount,file);
         
         // generateJSONdata();
