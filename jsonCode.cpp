@@ -11,7 +11,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
-
+#include <cstdio>
+#include <sstream>
 
 std::vector<std::string> Names;
 
@@ -123,32 +124,53 @@ void printGatherableData(unsigned long long GatherableDataOffset, unsigned long 
         std::cout << "\t\t\tSite Description: " << SiteDescription << std::endl;
     }
 }
-void printNames(unsigned long long NameOffset, unsigned long long NameCount, FILE *file)
-{
+void printNames(unsigned long long NameOffset, unsigned long long NameCount, FILE *file) {
     fseek(file, NameOffset + 4, SEEK_SET);
-    for (int i = 0; i < NameCount; i++)
-    {
+
+    std::stringstream ss;
+    
+    ss << "\"Names\": [\n";
+
+    std::vector<std::string> Names;
+
+    for (int i = 0; i < NameCount; i++) {
         std::string name;
         std::string NonCasePreservingHash;
         std::string CasePreservingHash;
 
         char ch;
-        while ((ch = getc(file)) != EOF && ch != 0)
-        {
-            if (ch != '\x00')
-            {
+        while ((ch = getc(file)) != EOF && ch != 0) {
+            if (ch != '\x00') {
                 name += ch;
             }
         }
         NonCasePreservingHash = info_finder(2, file);
         CasePreservingHash = info_finder(2, file);
-        std::cout << "\tName " << i << "\t" << name << std::endl;
+
+        ss << "\t{\n";
+        ss << "\t\t\"Index\":\""<< i <<"\",\n";
+        ss << "\t\t\"Name\": \"" << name << "\",\n";
+        ss << "\t\t\"CasePreservingHash\": " << stoul(CasePreservingHash, 0, 16) << ",\n";
+        ss << "\t\t\"NonCasePreservingHash\": " << stoul(NonCasePreservingHash, 0, 16) << "\n";
+        ss << "\t}";
+        if (i < NameCount - 1) {
+            ss << ",";
+        }
+        ss << "\n";
+
         Names.push_back(name);
-        std::cout << "\t\tCasePreservingHash:\t" << stoul(CasePreservingHash, 0, 16) << std::endl;
-        std::cout << "\t\tNonCasePreservingHash:\t" << stoul(NonCasePreservingHash, 0, 16) << std::endl;
+
         fseek(file, ftell(file) + 4, SEEK_SET);
     }
+
+    ss << "\t]\n";
+  
+
+  
+    std::cout << ss.str();
 }
+
+
 void Generations(int GenerationCount, FILE *file) {
     std::stringstream ss;
     
@@ -226,8 +248,10 @@ void SavedByEngineVersion_CompatibleWithEngineVersion(FILE *file)
     std::cout << ss.str();
 }
 
-void Thumbnails(long int ThumbnailTableOffset, FILE *file)
-{
+
+
+void Thumbnails(long int ThumbnailTableOffset, FILE *file) {
+    std::stringstream ss;
     fseek(file, ThumbnailTableOffset, SEEK_SET);
     int Number = stoi(info_finder(4, file), 0, 16);
     int ObjectClassNameLength;
@@ -235,59 +259,95 @@ void Thumbnails(long int ThumbnailTableOffset, FILE *file)
     std::string fileOffset;
     std::string ObjectClassName;
     std::string ObjectPathWithoutPackageName;
-    std::cout << "Thumbnail Info" << std::endl;
-    for (int i = 0; i < Number; i++)
-    {
-        std::cout << "\tIndex: " << i << std::endl;
+
+   
+    ss << "\"Thumbnails\": [\n";
+    for (int i = 0; i < Number; i++) {
         ObjectClassNameLength = stoi(info_finder(4, file), 0, 16);
         ObjectClassName = hexToAscii(finder(ObjectClassNameLength, file));
         ObjectPathWithoutPackageLength = stoi(info_finder(4, file), 0, 16);
         ObjectPathWithoutPackageName = hexToAscii(finder(ObjectPathWithoutPackageLength, file));
         fileOffset = info_finder(4, file);
-        std::cout << "\t\tObjectClassName: " << ObjectClassName << std::endl;
-        std::cout << "\t\tObjectPathWithoutPackageName: " << ObjectPathWithoutPackageName << std::endl;
-        std::cout << "\t\tFileOffset: " << fileOffset << std::endl;
+
+        ss << "\t{\n";
+        ss << "\t\t\"Index\": " << i << ",\n";
+        ss << "\t\t\"ObjectClassName\": \"" << ObjectClassName << "\",\n";
+        ss << "\t\t\"ObjectPathWithoutPackageName\": \"" << ObjectPathWithoutPackageName << "\",\n";
+        ss << "\t\t\"FileOffset\": \"" << fileOffset << "\"\n";
+        ss << "\t}";
+        if (i < Number - 1) {
+            ss << ",";
+        }
+        ss << "\n";
     }
+    ss << "\t]\n";
+   
+
+   
+    std::cout << ss.str();
 }
 
-void Depends(long int DependsOffset, FILE *file)
-{
+
+void Depends(long int DependsOffset, FILE *file) {
     fseek(file, DependsOffset, SEEK_SET);
     signed long int FPackageIndex;
     int Count = stoi(info_finder(4, file), 0, 16);
-    std::cout << "Depends" << std::endl;
-    if (Count != 0)
-    {
-        for (int i = 0; i < Count; i++)
-        {
+
+    std::stringstream ss;
+    ss << "\"Depends\": [\n";
+
+    if (Count != 0) {
+        for (int i = 0; i < Count; i++) {
             FPackageIndex = stoll(info_finder(4, file), 0, 16);
-            std::cout << "\t\tFPackageIndex: " << FPackageIndex << std::endl;
+
+            ss << "\t{\n";
+            ss << "\t\t\"FPackageIndex\": " << FPackageIndex << "\n";
+            ss << "\t}";
+            if (i < Count - 1) {
+                ss << ",";
+            }
+            ss << "\n";
         }
+    } else {
+        ss << "\t{\n";
+        ss << "\t\t\"NoDepends\": true\n";
+        ss << "\t}\n";
     }
-    else
-    {
-        std::cout << "\tNo Depends " << std::endl;
-    }
+
+    ss << "]\n";
+   
+    std::cout << ss.str();
 }
 
-void SoftPackageReferences(long int Offset, long int count, FILE *file)
-{
+void SoftPackageReferences(long int Offset, long int count, FILE *file) {
     unsigned long long nameIndex;
     fseek(file, Offset, SEEK_SET);
-    std::cout << "SoftPackageReferences: " << std::endl;
-    if (count != 0)
-    {
-        for (long int i = 0; i < count; i++)
-        {
+
+    std::stringstream ss;
+   
+    ss << "\"SoftPackageReferences\": [\n";
+
+    if (count != 0) {
+        for (long int i = 0; i < count; i++) {
             nameIndex = stoull(info_finder(8, file), 0, 16);
-            std::cout << "\t nameIndex: " << nameIndex << std::endl;
-            std::cout << "\t Name: " << Names[nameIndex] << std::endl;
+
+            ss << "\t{\n";
+            ss << "\t\t\"nameIndex\": " << nameIndex << ",\n";
+            ss << "\t\t\"Name\": \"" << Names[nameIndex] << "\"\n";
+            ss << "\t}";
+            if (i < count - 1) {
+                ss << ",";
+            }
+            ss << "\n";
         }
+    } else {
+        ss << "\t{\n";
+        ss << "\t\t\"NoSoftPackageReferences\": true\n";
+        ss << "\t}\n";
     }
-    else
-    {
-        std::cout << "No SoftPAckageReferences " << std::endl;
-    }
+
+    ss << "]\n";
+   
 }
 
 void AssetRegistryData(long long int AssetRegistryDataOffset, long long int WorlTileInfoDataOffset, long long HeaderSize, FILE *file)
@@ -558,6 +618,11 @@ void Exports(long long Offset, long long count, FILE *file)
     signed long long PayloadTocOffset = stoull(info_finder(8, file), 0, 16);
     std::cout << "\"PayloadTocOffset\": " << PayloadTocOffset << ",\n";
 
+    Thumbnails(ThumbnailTableOffset, file);
+    printNames(NameOffset, NameCount, file);
+    Depends(DependsOffset, file);
+    SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount, file);
+
     std::cout << "}\n";
     
 }
@@ -618,89 +683,16 @@ int main(int argc, char *argv[])
             unsigned long NamesReferencedFromExportDataCount;
             signed long long PayloadTocOffset;
 
-           // std::string json_output = to_json(16, file);
-          to_json(16,file) ;
            
-            
-    
+            to_json(16,file) ;
+           
 
-            // PackageFlags = info_finder(4, file);
-            // std::cout << "PackageFlags: " << stoul((PackageFlags), 0, 16) << std::endl;
-            // NameCount = stoi(info_finder(4, file), 0, 16);
-            // std::cout << "NameCount: " << NameCount << std::endl;
-            // NameOffset = stoi(info_finder(4, file), 0, 16);
-            // std::cout << "NameOffset: " << NameOffset << std::endl;
-            // long int pos = ftell(file);
-            // std::string Localisation_prefix = "21000000";
-            // bytes_detector(Localisation_prefix, pos, file);
-            // LocalizationId = finder(32, file);
-            // std::cout << "LocalisationID: " << hexToAscii(LocalizationId) << std::endl;
-
-            // fseek(file, ftell(file) + 1, SEEK_SET); // to skip the null byte
-            // GatherableTextDataCount = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "GatherableTextDataCount: " << GatherableTextDataCount << std::endl;
-            // GatherableTextDataOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "GatherableTextDataOffset: " << GatherableTextDataOffset << std::endl;
-            // ExportCount = stol(info_finder(4, file), 0, 16);
-            // std::cout << "ExportCount: " << ExportCount << std::endl;
-            // ExportOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "ExportOffset: " << ExportOffset << std::endl;
-            // ImportCount = stoi(info_finder(4, file), 0, 16);
-            // std::cout << "ImportCount: " << ImportCount << std::endl;
-            // ImportOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "ImportOffset: " << ImportOffset << std::endl;
-            // DependsOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "DependsOffset: " << DependsOffset << std::endl;
-            // SoftPackageReferencesCount = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "SoftPackageReferencesCount: " << SoftPackageReferencesCount << std::endl;
-            // SoftPackageReferencesOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "SoftPackageReferencesOffset: " << SoftPackageReferencesOffset << std::endl;
-            // SearchableNamesOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "SearchableNamesOffset: " << SearchableNamesOffset << std::endl;
-            // ThumbnailTableOffset = stoul(info_finder(4, file), 0, 16);
-            // std::cout << "ThumbnailTableOffset: " << ThumbnailTableOffset << std::endl;
-            // GUID = finder(16, file);
-            // std::cout << "GUID: " << GUID << std::endl;
-            // PersistentGUID = finder(16, file);
-            // std::cout << "PersistentGUID: " << PersistentGUID << std::endl;
-            // GenerationsCount = stoi(info_finder(4, file), 0, 16);
-            // std::cout << "GenerationsCount: " << GenerationsCount << std::endl;
-            // Generations(GenerationsCount, file);
-
-        //    // SavedByEngineVersion_CompatibleWithEngineVersion(file);
-        //     CompressedFlags = finder(4, file);
-        //     std::cout << "CompressedFlags: " << CompressedFlags << std::endl;
-        //     CompressedChunksCount = stol(info_finder(4, file)); // isko bhi formatting krni hai
-        //     std::cout << "CompressedChunksCount: " << CompressedChunksCount << std::endl;
-        //     PackageSource = info_finder(4, file);
-        //     std::cout << "PackageSource: " << stoll((PackageSource), 0, 16) << std::endl;
-        //     fseek(file, ftell(file) + 4, SEEK_SET); // yaha pr shyd koi ek property hai. ya toh NumTexture Allocations hai ya AdditionalDatatoCook hai
-        //     AssetRegistryDataOffset = stoll(info_finder(4, file), 0, 16);
-        //     std::cout << "AssetregistryDataOffset: " << AssetRegistryDataOffset << std::endl;
-        //     BulkDataStartOffset = stoll(info_finder(8, file), 0, 16);
-        //     std::cout << "BulkDataStartOffset: " << BulkDataStartOffset << std::endl;
-        //     WorlTileInfoDataOffset = stoll(info_finder(4, file), 0, 16);
-        //     std::cout << "WorlTileInfoDataOffset: " << WorlTileInfoDataOffset << std::endl;
-        //     ChunkIDs = finder(4, file); // ek baar ye chunk krke dekhna hai, isi byte pr milengi ids
-        //     std::cout << "ChunkIDs: " << ChunkIDs << std::endl;
-        //     PreloadDependencyCount = stoll(info_finder(4, file), 0, 16);
-        //     std::cout << "PreloadDependencyCount: " << PreloadDependencyCount << std::endl;
-        //     PreloadDependencyOffset = stoll(info_finder(4, file), 0, 16);
-        //     std::cout << "PreloadDependencyOffset: " << PreloadDependencyOffset << std::endl;
-        //     NamesReferencedFromExportDataCount = stoll(info_finder(4, file), 0, 16);
-        //     std::cout << "NamesReferencedFromExportDataCount: " << NamesReferencedFromExportDataCount << std::endl;
-        //     PayloadTocOffset = stoull(info_finder(8, file), 0, 16);
-        //     std::cout << "PayloadTocOffset: " << PayloadTocOffset << std::endl;
-
-            Thumbnails(ThumbnailTableOffset, file);
-            std::cout << "=============Names========" << std::endl;
-            printNames(NameOffset, NameCount, file);
-            Depends(DependsOffset, file);
-            SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount, file);
-            SearchableNameOffset(SearchableNamesOffset, file);
-            //AssetRegistryData(AssetRegistryDataOffset, WorlTileInfoDataOffset, HeaderSize, file);
-            Imports(ImportCount, ImportOffset, file);
-            Exports(ExportOffset, ExportCount, file);
+          
+            // SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount, file);
+            // SearchableNameOffset(SearchableNamesOffset, file);
+            // //AssetRegistryData(AssetRegistryDataOffset, WorlTileInfoDataOffset, HeaderSize, file);
+            // Imports(ImportCount, ImportOffset, file);
+            // Exports(ExportOffset, ExportCount, file);
          
         }
     }
