@@ -442,8 +442,57 @@ void Exports(long long Offset, long long count, FILE *file)
     }
 }
 
+// void generateJSONdata() {
+//     rapidjson::Document d;
+//     d.SetObject();
+//     FILE* file;
+//     char* buffer  = new char();
 
+//     d.AddMember("Name: ", "Mark", d.GetAllocator());
+//     d.AddMember("Agr: ", "30", d.GetAllocator());
+//     file = fopen("result.json", "w");
 
+//     rapidjson::FileWriteStream os(file, buffer, sizeof(buffer));
+//     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+//     d.Accept(writer);
+// }
+
+    std::string to_json(int header_length, FILE* file) {
+    std::stringstream ss;
+    ss << "{\n";
+
+    std::string header = finder(header_length, file);
+    std::string EpackedFileTag = little_to_big_endian(header.substr(0, 8));
+    std::string LegacyFileVersion = header.substr(8, 8);
+    std::string LegacyUE3Version = header.substr(16, 8);
+    std::string FileVersionUE4 = header.substr(24, 8);
+    std::string FileVersionUE5 = info_finder(4, file);
+    std::string FileVersionLicenseeUE4 = info_finder(4, file);
+    std::string CustomVersionsCount = info_finder(4, file);
+    ftell(file);
+    unsigned long long versions = stoul(CustomVersionsCount, 0, 16);
+    unsigned long long versionKeylength = versions * 16;
+    unsigned long long total_version_bytes_length = versions * 4;
+    int totalCustomVersionLength = versionKeylength + total_version_bytes_length;
+    fseek(file, ftell(file) + totalCustomVersionLength, SEEK_SET);
+    ftell(file);
+    unsigned long long int HeaderSize = stoul(info_finder(4, file), 0, 16);
+            
+    ss << "\"Header\": \"" << header << "\",\n";
+    ss << "\"EPackedFileTag\": " << std::stoul(EpackedFileTag, 0, 16) << ",\n";
+    ss << "\"LegacyFileVersion\": \"" << LegacyFileVersion << "\",\n";
+    ss << "\"LegacyUE3Version\": " << std::stoi(little_to_big_endian(LegacyUE3Version), 0, 16) << ",\n";
+    ss << "\"FileVersionUE4\": " << std::stoi(little_to_big_endian(FileVersionUE4), 0, 16) << ",\n";
+    ss << "\"FileVersionUE5\": " << std::stoul(FileVersionUE5, 0, 16) << ",\n";
+    ss << "\"FileVersionLicenseeUE4\": " << std::stoul(FileVersionLicenseeUE4, 0, 16) << ",\n";
+    ss << "\"CustomVersionsCount\": " << versions <<"\n";
+    ss << "\"Total Header Size\": " << HeaderSize << std::endl;
+
+   
+
+    ss << "}\n";
+    return ss.str();
+}
 
 
 int main(int argc, char *argv[])
@@ -490,7 +539,7 @@ int main(int argc, char *argv[])
             unsigned long long NameOffset;
             unsigned long long SearchableNamesOffset;
             unsigned long long GatherableTextDataOffset;
-            unsigned long long int HeaderSize;
+           
             unsigned long long GatherableTextDataCount;
             long CompressedChunksCount;
             unsigned long AssetRegistryDataOffset;
@@ -500,35 +549,21 @@ int main(int argc, char *argv[])
             unsigned long long PreloadDependencyOffset;
             unsigned long NamesReferencedFromExportDataCount;
             signed long long PayloadTocOffset;
-           
-           
-            header = finder(16, file);
-            std::cout << "Header: " << header << std::endl;
-            EpackedFileTag = little_to_big_endian(header.substr(0, 8));
-            std::cout << "EPackedFileTag: " << stoul(EpackedFileTag, 0, 16) << std::endl;
-            LegacyFileVersion = header.substr(8, 8);
-            std::cout << "LegacyFileVersion: " << LegacyFileVersion << std::endl;
-            LegacyUE3Version = header.substr(16, 8);
-            std::cout << "LegacyUE3Version: " << stoi(little_to_big_endian(LegacyUE3Version), 0, 16) << std::endl;
-            FileVersionUE4 = header.substr(24, 8);
-            std::cout << "FileVersionUE4: " << stoi(little_to_big_endian(FileVersionUE4), 0, 16) << std::endl;
-            FileVersionUE5 = info_finder(4, file);
-            std::cout << "FileVersionUE5: " << stoul(FileVersionUE5, 0, 16) << std::endl;
-            FileVersionLicenseeUE4 = info_finder(4, file);
-            std::cout << "FileVersionLicenseeUE4: " << stoul(FileVersionLicenseeUE4, 0, 16) << std::endl;
-            CustomVersionsCount = info_finder(4, file);
-            unsigned long long versions = stoul(CustomVersionsCount, 0, 16);
-            std::cout << "CustomVersionsCount: " << versions << std::endl;
-            ftell(file);
 
-            unsigned long long versionKeylength = versions * 16;
-            unsigned long long total_version_bytes_length = versions * 4;
-            int totalCustomVersionLength = versionKeylength + total_version_bytes_length;
-            fseek(file, ftell(file) + totalCustomVersionLength, SEEK_SET);
-            ftell(file);
+            std::string json_output = to_json(16, file);
+            std::cout << json_output << std::endl;
+           
+            
+    
 
-            HeaderSize = stoul(info_finder(4, file), 0, 16);
-            std::cout << "Total Header Size: " << HeaderSize << std::endl;
+           // unsigned long long versionKeylength = versions * 16;
+          //  unsigned long long total_version_bytes_length = versions * 4;
+         //   int totalCustomVersionLength = versionKeylength + total_version_bytes_length;
+           // fseek(file, ftell(file) + totalCustomVersionLength, SEEK_SET);
+            // ftell(file);
+
+            // HeaderSize = stoul(info_finder(4, file), 0, 16);
+            //std::cout << "Total Header Size: " << HeaderSize << std::endl;
             unsigned long long FolderNameSize = stoul(info_finder(4, file), 0, 16);
             FolderName = finder(FolderNameSize, file).substr(0, FolderNameSize * 2 - 2);
             std::cout << "FolderName: " << hexToAscii(FolderName) << std::endl;
@@ -605,7 +640,7 @@ int main(int argc, char *argv[])
             Depends(DependsOffset, file);
             SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount, file);
             SearchableNameOffset(SearchableNamesOffset, file);
-            AssetRegistryData(AssetRegistryDataOffset, WorlTileInfoDataOffset, HeaderSize, file);
+            //AssetRegistryData(AssetRegistryDataOffset, WorlTileInfoDataOffset, HeaderSize, file);
             Imports(ImportCount, ImportOffset, file);
             Exports(ExportOffset, ExportCount, file);
          
