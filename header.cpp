@@ -442,9 +442,20 @@ void Exports(long long Offset, long long count, FILE *file)
     }
 }
 
+// void generateJSONdata() {
+//     rapidjson::Document d;
+//     d.SetObject();
+//     FILE* file;
+//     char* buffer  = new char();
 
+//     d.AddMember("Name: ", "Mark", d.GetAllocator());
+//     d.AddMember("Agr: ", "30", d.GetAllocator());
+//     file = fopen("result.json", "w");
 
-
+//     rapidjson::FileWriteStream os(file, buffer, sizeof(buffer));
+//     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+//     d.Accept(writer);
+// }
 
 int main(int argc, char *argv[])
 {
@@ -500,8 +511,6 @@ int main(int argc, char *argv[])
             unsigned long long PreloadDependencyOffset;
             unsigned long NamesReferencedFromExportDataCount;
             signed long long PayloadTocOffset;
-           
-           
             header = finder(16, file);
             std::cout << "Header: " << header << std::endl;
             EpackedFileTag = little_to_big_endian(header.substr(0, 8));
