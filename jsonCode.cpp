@@ -350,8 +350,7 @@ void SoftPackageReferences(long int Offset, long int count, FILE *file) {
    
 }
 
-void AssetRegistryData(long long int AssetRegistryDataOffset, long long int WorlTileInfoDataOffset, long long HeaderSize, FILE *file)
-{
+void AssetRegistryData(long long int AssetRegistryDataOffset, long long int WorlTileInfoDataOffset, long long HeaderSize, FILE *file) {
     long long int offset = HeaderSize;
     std::string ObjectPath;
     std::string ObjectClass;
@@ -360,160 +359,193 @@ void AssetRegistryData(long long int AssetRegistryDataOffset, long long int Worl
     std::string value;
 
     fseek(file, AssetRegistryDataOffset, SEEK_SET);
-    if (WorlTileInfoDataOffset > 0)
-    {
+    if (WorlTileInfoDataOffset > 0) {
         offset = WorlTileInfoDataOffset;
     }
     unsigned long long int AssetRegistryDataSize = offset - AssetRegistryDataOffset;
     unsigned long long int DependencyDataOffset = stoll(info_finder(8, file), 0, 16);
-    std::cout << "DependecyDataOffset: " << DependencyDataOffset << std::endl;
-    std::cout << "AssetRegistryDataSize: " << AssetRegistryDataSize << std::endl;
+
+    std::stringstream ss;
+
+    ss << "\"DependecyDataOffset\": " << DependencyDataOffset << ",\n";
+    ss << "\"AssetRegistryDataSize\": " << AssetRegistryDataSize << ",\n";
+    ss << "\"AssetData\": [\n";
+
     long AssetDatacount = stoll(info_finder(4, file), 0, 16);
-    for (int i = 0; i < AssetDatacount; i++)
-    {
+    for (int i = 0; i < AssetDatacount; i++) {
         long int ObjectPathlength = stol(info_finder(4, file), 0, 16);
         ObjectPath = hexToAscii(finder(ObjectPathlength, file));
-        std::cout << "\tObjectPath: " << ObjectPath << std::endl;
+
         long int ObjectClasslength = stol(info_finder(4, file), 0, 16);
         ObjectClass = hexToAscii(finder(ObjectClasslength, file));
-        std::cout << "\tObjectClass: " << ObjectClass << std::endl;
+
         TagCount = stoll(info_finder(4, file), 0, 16);
-        std::cout << "\tTagCount: " << TagCount << std::endl;
-        for (int j = 0; j < TagCount; j++)
-        {
-            std::cout << "\t\tTag: " << j + 1 << std::endl;
+
+        ss << "\t{\n";
+        ss << "\t\t\"ObjectPath\": \"" << ObjectPath << "\",\n";
+        ss << "\t\t\"ObjectClass\": \"" << ObjectClass << "\",\n";
+        ss << "\t\t\"Tags\": [\n";
+        for (int j = 0; j < TagCount; j++) {
             long int keylength = stoll(info_finder(4, file), 0, 16);
             key = hexToAscii(finder(keylength, file));
-            std::cout << "\t\tKey_tag: " << key << std::endl;
 
             signed long valuelength = stoll(info_finder(4, file), 0, 16);
-            std::cout << "\t\tvallength: " << valuelength << std::endl;
-            if (valuelength < 0)
-            {
+            if (valuelength < 0) {
                 valuelength = 2 * abs(valuelength);
             }
             value = hexToAscii(finder(valuelength, file));
-            std::cout << "\t\tValue_tag: " << value << std::endl;
+
+            ss << "\t\t\t{\n";
+            ss << "\t\t\t\t\"Key_tag\": \"" << key << "\",\n";
+            ss << "\t\t\t\t\"Value_tag\": \"" << value << "\"\n";
+            ss << "\t\t\t}";
+            if (j < TagCount - 1) {
+                ss << ",";
+            }
+            ss << "\n";
         }
+        ss << "\t\t]\n";
+        ss << "\t}";
+        if (i < AssetDatacount - 1) {
+            ss << ",";
+        }
+        ss << "\n";
     }
+    ss << "]\n";
+    std::cout << ss.str();
 }
-void SearchableNameOffset(long long SearchableNamesOffset, FILE *file)
-{
+
+
+void SearchableNameOffset(long long SearchableNamesOffset, FILE *file) {
     fseek(file, SearchableNamesOffset, SEEK_SET);
     long count = stol(info_finder(4, file), 0, 16);
-    int SearchableNamelength;
-    std::string SearchableName;
-    if (count == 0)
-    {
-        std::cout << "No Searchable Names present" << std::endl;
-    }
-    else
-    {
-        for (long i = 0; i < count; i++)
-        {
-            SearchableNamelength = stoi(info_finder(4, file), 0, 16);
-            SearchableName = hexToAscii(finder(SearchableNamelength, file));
-            std::cout << "\tSearchable Name: " << SearchableName << std::endl;
+    std::stringstream ss;
+    ss << "\"SearchableNames\": [\n";
+
+    if (count == 0) {
+        ss << "\t{\n";
+        ss << "\t\t\"NoSearchableNames\": true\n";
+        ss << "\t}\n";
+    } else {
+        for (long i = 0; i < count; i++) {
+            int SearchableNameLength = stoi(info_finder(4, file), 0, 16);
+            std::string SearchableName = hexToAscii(finder(SearchableNameLength, file));
+
+            ss << "\t{\n";
+            ss << "\t\t\"SearchableName\": \"" << SearchableName << "\"\n";
+            ss << "\t}";
+            if (i < count - 1) {
+                ss << ",";
+            }
+            ss << "\n";
         }
     }
+    ss << "]\n";
+    std::cout << ss.str();
 }
-void Imports(unsigned long long ImportCount, unsigned long long ImportOffset, FILE *file)
-{
-    std::cout << "Imports " << std::endl;
+
+
+
+void Imports(unsigned long long ImportCount, unsigned long long ImportOffset, FILE *file) {
+    std::stringstream ss;
+   
+    ss << "\"Imports\": [\n";
+
     signed long outerIndex;
     fseek(file, ImportOffset, SEEK_SET);
-    for (int i = 0; i < ImportCount; i++)
-    {
-        std::cout << "\timport: " << i << std::endl;
+    for (int i = 0; i < ImportCount; i++) {
         unsigned long long classPackageIndex = stoull(info_finder(8, file), 0, 16);
-        std::cout << "\t\tClassPackage: " << Names[classPackageIndex] << std::endl;
         unsigned long long classNameIndex = stoull(info_finder(8, file), 0, 16);
-        std::cout << "\t\tClassName: " << Names[classNameIndex] << std::endl;
         outerIndex = stoll(info_finder(4, file), 0, 16);
-        std::cout << "\t\touterIndex: " << outerIndex << std::endl;
         unsigned long long objectNameIndex = stoull(info_finder(8, file), 0, 16);
-        std::cout << "\t\tObjectName: " << Names[objectNameIndex] << std::endl;
         unsigned long long packageNameIndex = stoll(info_finder(4, file), 0, 16);
-        std::cout << "\t\tPackageName: " << Names[packageNameIndex] << std::endl;
         unsigned long long bImportOptional = stoll(info_finder(4, file), 0, 16);
-        std::cout << "\t\tbImportOptional: " << bImportOptional << std::endl;
+
+        ss << "\t{\n";
+        ss << "\t\t\"import\": " << i << ",\n";
+        ss << "\t\t\"ClassPackage\": \"" << Names[classPackageIndex] << "\",\n";
+        ss << "\t\t\"ClassName\": \"" << Names[classNameIndex] << "\",\n";
+        ss << "\t\t\"OuterIndex\": " << outerIndex << ",\n";
+        ss << "\t\t\"ObjectName\": \"" << Names[objectNameIndex] << "\",\n";
+        ss << "\t\t\"PackageName\": \"" << Names[packageNameIndex] << "\",\n";
+        ss << "\t\t\"bImportOptional\": " << bImportOptional << "\n";
+        ss << "\t}";
+        if (i < ImportCount - 1) {
+            ss << ",";
+        }
+        ss << "\n";
+
         fseek(file, ftell(file) + 4, SEEK_SET);
     }
+
+    ss << "]\n";
+
+    std::cout << ss.str();
 }
-void Exports(long long Offset, long long count, FILE *file)
-{
-    std::cout << "Export: " << std::endl;
-    signed long ClassIndex;
-    signed long SuperIndex;
-    signed long TemplateIndex;
-    signed long OuterIndex;
-    std::string ObjectName;
-    signed long ObjectFlags;
-    long long SerialSize;
-    long long SerialOffset;
-    signed long bForcedExport;
-    signed long bNotForClient;
-    signed long bNotForServer;
-    std::string packageGuid;
-    signed long packageFlags;
-    signed long bNotAlwaysLoadedForEditorGame;
-    signed long bIsAsset;
-    signed long bGeneratePublicHash;
-    signed long FirstExportDependency;
-    signed long SerializationBeforeSerializationDependency;
-    signed long createBeforeSerializationDependency;
-    signed long serializationBeforeCreateDependency;
-    signed long createBeforeCreateDependency;
-    fseek(file, Offset, SEEK_SET);
-    for (int i = 0; i < count; i++)
-    {
 
-        std::cout << "\tExport: " << i << std::endl;
-        ClassIndex = stoll(info_finder(4, file), 0, 16);
-        SuperIndex = stoll(info_finder(4, file), 0, 16);
-        std::cout << "\t\tClassIndex:\t" << ClassIndex << std::endl;
-        std::cout << "\t\tSuperIndex:\t" << SuperIndex << std::endl;
-        TemplateIndex = stoll(info_finder(4, file), 0, 16);
-        OuterIndex = stoll(info_finder(4, file), 0, 16);
+
+void Exports(long long Offset, long long count, FILE *file) {
+    std::stringstream ss;
+ 
+    ss << "\"Exports\": [\n";
+
+    for (int i = 0; i < count; i++) {
+        signed long ClassIndex = stoll(info_finder(4, file), 0, 16);
+        signed long SuperIndex = stoll(info_finder(4, file), 0, 16);
+        signed long TemplateIndex = stoll(info_finder(4, file), 0, 16);
+        signed long OuterIndex = stoll(info_finder(4, file), 0, 16);
         long long index = stoll(info_finder(8, file), 0, 16);
-        ObjectName = Names[index];
-        ObjectFlags = stoll(info_finder(4, file), 0, 16);
-        SerialSize = stoll(info_finder(8, file), 0, 16);
-        SerialOffset = stoull(info_finder(8, file), 0, 16);
-        bForcedExport = stoll(info_finder(4, file), 0, 16);
-        bNotForClient = stoll(info_finder(4, file), 0, 16);
-        bNotForServer = stoll(info_finder(4, file), 0, 16);
-        packageGuid = info_finder(16, file);
-        packageFlags = stoll(info_finder(4, file), 0, 16);
-        bNotAlwaysLoadedForEditorGame = stoll(info_finder(4, file), 0, 16);
-        bIsAsset = stoll(info_finder(4, file), 0, 16);
-        bGeneratePublicHash = stoll(info_finder(4, file), 0, 16);
-        FirstExportDependency = stoll(info_finder(4, file), 0, 16);
-        SerializationBeforeSerializationDependency = stoll(info_finder(4, file), 0, 16);
-        createBeforeSerializationDependency = stoll(info_finder(4, file), 0, 16);
-        serializationBeforeCreateDependency = stoll(info_finder(4, file), 0, 16);
-        createBeforeCreateDependency = stoll(info_finder(4, file), 0, 16);
+        std::string ObjectName = Names[index];
+        signed long ObjectFlags = stoll(info_finder(4, file), 0, 16);
+        long long SerialSize = stoll(info_finder(8, file), 0, 16);
+        long long SerialOffset = stoull(info_finder(8, file), 0, 16);
+        signed long bForcedExport = stoll(info_finder(4, file), 0, 16);
+        signed long bNotForClient = stoll(info_finder(4, file), 0, 16);
+        signed long bNotForServer = stoll(info_finder(4, file), 0, 16);
+        std::string packageGuid = info_finder(16, file);
+        signed long packageFlags = stoll(info_finder(4, file), 0, 16);
+        signed long bNotAlwaysLoadedForEditorGame = stoll(info_finder(4, file), 0, 16);
+        signed long bIsAsset = stoll(info_finder(4, file), 0, 16);
+        signed long bGeneratePublicHash = stoll(info_finder(4, file), 0, 16);
+        signed long FirstExportDependency = stoll(info_finder(4, file), 0, 16);
+        signed long SerializationBeforeSerializationDependency = stoll(info_finder(4, file), 0, 16);
+        signed long createBeforeSerializationDependency = stoll(info_finder(4, file), 0, 16);
+        signed long serializationBeforeCreateDependency = stoll(info_finder(4, file), 0, 16);
+        signed long createBeforeCreateDependency = stoll(info_finder(4, file), 0, 16);
 
-        std::cout << "\t\tTemplateIndex:\t" << TemplateIndex << std::endl;
-        std::cout << "\t\tOuterIndex:\t" << OuterIndex << std::endl;
-        std::cout << "\t\tObjectName:\t" << ObjectName << std::endl;
-        std::cout << "\t\tObjectFlags:\t" << ObjectFlags << std::endl;
-        std::cout << "\t\tSerialSize:\t" << SerialSize << std::endl;
-        std::cout << "\t\tSerialOffset:\t" << SerialOffset << std::endl;
-        std::cout << "\t\tbForcedExport:\t" << bForcedExport << std::endl;
-        std::cout << "\t\tbNotForClient:\t" << bNotForClient << std::endl;
-        std::cout << "\t\tbNotForServer:\t" << bNotForServer << std::endl;
-        std::cout << "\t\tpackageGuid:\t" << packageGuid << std::endl;
-        std::cout << "\t\tpackageFlags:\t" << packageFlags << std::endl;
-        std::cout << "\t\tbNotAlwaysLoadedForEditorGame:\t" << bNotAlwaysLoadedForEditorGame << std::endl;
-        std::cout << "\t\tbIsAsset:\t" << bIsAsset << std::endl;
-        std::cout << "\t\tbGeneratePublicHash:\t" << bGeneratePublicHash << std::endl;
-        std::cout << "\t\tFirstExportDependency:\t" << FirstExportDependency << std::endl;
-        std::cout << "\t\tSerializationBeforeSerializationDependency:\t" << SerializationBeforeSerializationDependency << std::endl;
-        std::cout << "\t\tcreateBeforeSerializationDependency:\t" << createBeforeSerializationDependency << std::endl;
-        std::cout << "\t\tserializationBeforeCreateDependency:\t" << serializationBeforeCreateDependency << std::endl;
-        std::cout << "\t\tcreateBeforeCreateDependency:\t" << createBeforeCreateDependency << std::endl;
+        ss << "\t{\n";
+        ss << "\t\t\"Export\": " << i << ",\n";
+        ss << "\t\t\"ClassIndex\": " << ClassIndex << ",\n";
+        ss << "\t\t\"SuperIndex\": " << SuperIndex << ",\n";
+        ss << "\t\t\"TemplateIndex\": " << TemplateIndex << ",\n";
+        ss << "\t\t\"OuterIndex\": " << OuterIndex << ",\n";
+        ss << "\t\t\"ObjectName\": \"" << ObjectName << "\",\n";
+        ss << "\t\t\"ObjectFlags\": " << ObjectFlags << ",\n";
+        ss << "\t\t\"SerialSize\": " << SerialSize << ",\n";
+        ss << "\t\t\"SerialOffset\": " << SerialOffset << ",\n";
+        ss << "\t\t\"bForcedExport\": " << bForcedExport << ",\n";
+        ss << "\t\t\"bNotForClient\": " << bNotForClient << ",\n";
+        ss << "\t\t\"bNotForServer\": " << bNotForServer << ",\n";
+        ss << "\t\t\"packageGuid\": \"" << packageGuid << "\",\n";
+        ss << "\t\t\"packageFlags\": " << packageFlags << ",\n";
+        ss << "\t\t\"bNotAlwaysLoadedForEditorGame\": " << bNotAlwaysLoadedForEditorGame << ",\n";
+        ss << "\t\t\"bIsAsset\": " << bIsAsset << ",\n";
+        ss << "\t\t\"bGeneratePublicHash\": " << bGeneratePublicHash << ",\n";
+        ss << "\t\t\"FirstExportDependency\": " << FirstExportDependency << ",\n";
+        ss << "\t\t\"SerializationBeforeSerializationDependency\": " << SerializationBeforeSerializationDependency << ",\n";
+        ss << "\t\t\"createBeforeSerializationDependency\": " << createBeforeSerializationDependency << ",\n";
+        ss << "\t\t\"serializationBeforeCreateDependency\": " << serializationBeforeCreateDependency << ",\n";
+        ss << "\t\t\"createBeforeCreateDependency\": " << createBeforeCreateDependency << "\n";
+        ss << "\t}";
+        if (i < count - 1) {
+            ss << ",";
+        }
+        ss << "\n";
     }
+
+    ss << "]\n";
+   
+    std::cout << ss.str();
 }
 
 
@@ -622,6 +654,11 @@ void Exports(long long Offset, long long count, FILE *file)
     printNames(NameOffset, NameCount, file);
     Depends(DependsOffset, file);
     SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount, file);
+    
+    SearchableNameOffset(SearchableNamesOffset, file);
+    AssetRegistryData(AssetRegistryDataOffset, WorlTileInfoDataOffset, HeaderSize, file);
+    Imports(ImportCount, ImportOffset, file);
+    Exports(ExportOffset, ExportCount, file);
 
     std::cout << "}\n";
     
@@ -642,58 +679,9 @@ int main(int argc, char *argv[])
         }
         else
         {
-            std::string EpackedFileTag;
-            std::string header;
-            std::string LegacyUE3Version;
-            std::string LegacyFileVersion;
-            std::string FileVersionUE5;
-            std::string FileVersionUE4;
-            std::string CustomVersionsCount;
-            std::string FileVersionLicenseeUE4;
-            std::string LocalizationId;
-            std::string FolderName;
-            std::string PackageFlags;
-            std::string GUID;
-            std::string PersistentGUID;
-            std::string CompressedFlags;
-            std::string PackageSource;
-            std::string ChunkIDs;
-
-            long int GenerationsCount;
-            unsigned long DependsOffset;
-            unsigned long ThumbnailTableOffset;
-            unsigned long SoftPackageReferencesCount;
-            unsigned long long ImportOffset;
-            unsigned long long ImportCount;
-            unsigned long long ExportCount;
-            unsigned long long ExportOffset;
-            unsigned long int SoftPackageReferencesOffset;
-            unsigned long long NameCount;
-            unsigned long long NameOffset;
-            unsigned long long SearchableNamesOffset;
-            unsigned long long GatherableTextDataOffset;
-           
-            unsigned long long GatherableTextDataCount;
-            long CompressedChunksCount;
-            unsigned long AssetRegistryDataOffset;
-            unsigned long long BulkDataStartOffset;
-            unsigned long long WorlTileInfoDataOffset;
-            signed long PreloadDependencyCount;
-            unsigned long long PreloadDependencyOffset;
-            unsigned long NamesReferencedFromExportDataCount;
-            signed long long PayloadTocOffset;
-
-           
-            to_json(16,file) ;
-           
-
-          
-            // SoftPackageReferences(SoftPackageReferencesOffset, SoftPackageReferencesCount, file);
-            // SearchableNameOffset(SearchableNamesOffset, file);
-            // //AssetRegistryData(AssetRegistryDataOffset, WorlTileInfoDataOffset, HeaderSize, file);
-            // Imports(ImportCount, ImportOffset, file);
-            // Exports(ExportOffset, ExportCount, file);
-         
+                      
+            to_json(16,file) ; 
+                   
         }
     }
 }
