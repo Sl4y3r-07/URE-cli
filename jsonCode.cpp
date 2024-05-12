@@ -149,31 +149,41 @@ void printNames(unsigned long long NameOffset, unsigned long long NameCount, FIL
         fseek(file, ftell(file) + 4, SEEK_SET);
     }
 }
-void Generations(int GenerationCount, FILE *file)
-{
+void Generations(int GenerationCount, FILE *file) {
+    std::stringstream ss;
+    
+
     std::string Generation;
     std::string nameCount;
     std::string exportCount;
-    if (GenerationCount > 0)
-    {
-        for (int i = 1; i <= GenerationCount; i++)
-        {
-            std::cout << "\tGeneration " << i << std::endl;
+    if (GenerationCount > 0) {
+        ss << "\"Generations\": [\n";
+        for (int i = 0; i < GenerationCount; i++) {
+            ss << "\t{\n";
+            ss << "\t\t\"Generation\": " << i << ",\n";
             exportCount = info_finder(4, file);
             nameCount = info_finder(4, file);
-            std::cout << "\t\texportCount:\t" << stoul(exportCount, 0, 16) << std::endl;
-            std::cout << "\t\tnameCount:\t" << stoul(nameCount, 0, 16) << std::endl;
+            ss << "\t\t\"exportCount\": " << stoul(exportCount, 0, 16) << ",\n";
+            ss << "\t\t\"nameCount\": " << stoul(nameCount, 0, 16) << "\n";
+            ss << "\t}";
+            if (i < GenerationCount) {
+                ss << ",";
+            }
+            ss << "\n";
         }
+        ss << "\t]\n";
     }
+    
+
+   
+    std::cout << ss.str();
 }
 void SavedByEngineVersion_CompatibleWithEngineVersion(FILE *file)
-{
+{     std::stringstream ss;
     if ((info_finder(28, file)) == "00000000000000000000000000000000000000000000000000000000")
     {
-        std::cout << "SavedByEngineVersion: "
-                  << " " << std::endl;
-        std::cout << "CompatibleWithEngineVersion: "
-                  << " " << std::endl;
+       ss << "\"SavedByEngineVersion\": "<< " " << ",\n";
+       ss << "\"CompatibleWithEngineVersion\": "<< " " << "\n";
     }
     else
     {
@@ -193,7 +203,7 @@ void SavedByEngineVersion_CompatibleWithEngineVersion(FILE *file)
             fseek(file, ftell(file) - 1, SEEK_SET);
             version += hexToAscii(finder(i, file));
         }
-        std::cout << "SavedByEngineVersion: " << string << "-" << number << version << std::endl;
+        ss << "\"SavedByEngineVersion\": " << string << "-" << number << version << ",\n";
 
         string = std::to_string(stoi(info_finder(2, file), 0, 16)) + "." + std::to_string(stoi(info_finder(2, file), 0, 16)) + "." + std::to_string(stoi(info_finder(2, file), 0, 16));
         std::reverse(string.begin(), string.end());
@@ -209,9 +219,13 @@ void SavedByEngineVersion_CompatibleWithEngineVersion(FILE *file)
             fseek(file, ftell(file) - 1, SEEK_SET);
             version_1 += hexToAscii(finder(i, file));
         }
-        std::cout << "CompatibleWithEngineVersion: " << string << "-" << number << version_1 << std::endl;
+        ss << "\"CompatibleWithEngineVersion\": " << string << "-" << number << version_1 << ",\n";
     }
+
+    
+    std::cout << ss.str();
 }
+
 void Thumbnails(long int ThumbnailTableOffset, FILE *file)
 {
     fseek(file, ThumbnailTableOffset, SEEK_SET);
@@ -444,9 +458,9 @@ void Exports(long long Offset, long long count, FILE *file)
 
 
 
-    std::string to_json(int header_length, FILE* file) {
-    std::stringstream ss;
-    ss << "{\n";
+  void to_json(int header_length, FILE* file) {
+   
+    std::cout << "{\n";
 
     std::string header = finder(header_length, file);
     std::string EpackedFileTag = little_to_big_endian(header.substr(0, 8));
@@ -465,60 +479,87 @@ void Exports(long long Offset, long long count, FILE *file)
     ftell(file);
     unsigned long long int HeaderSize = stoul(info_finder(4, file), 0, 16);
             
-    ss << "\"Header\": \"" << header << "\",\n";
-    ss << "\"EPackedFileTag\": " << std::stoul(EpackedFileTag, 0, 16) << ",\n";
-    ss << "\"LegacyFileVersion\": \"" << LegacyFileVersion << "\",\n";
-    ss << "\"LegacyUE3Version\": " << std::stoi(little_to_big_endian(LegacyUE3Version), 0, 16) << ",\n";
-    ss << "\"FileVersionUE4\": " << std::stoi(little_to_big_endian(FileVersionUE4), 0, 16) << ",\n";
-    ss << "\"FileVersionUE5\": " << std::stoul(FileVersionUE5, 0, 16) << ",\n";
-    ss << "\"FileVersionLicenseeUE4\": " << std::stoul(FileVersionLicenseeUE4, 0, 16) << ",\n";
-    ss << "\"CustomVersionsCount\": " << versions <<",\n";
-    ss << "\"Total Header Size\": " << HeaderSize << ",\n";
+    std::cout << "\"Header\": \"" << header << "\",\n";
+    std::cout << "\"EPackedFileTag\": " << std::stoul(EpackedFileTag, 0, 16) << ",\n";
+    std::cout<< "\"LegacyFileVersion\": \"" << LegacyFileVersion << "\",\n";
+    std::cout << "\"LegacyUE3Version\": " << std::stoi(little_to_big_endian(LegacyUE3Version), 0, 16) << ",\n";
+    std::cout << "\"FileVersionUE4\": " << std::stoi(little_to_big_endian(FileVersionUE4), 0, 16) << ",\n";
+    std::cout << "\"FileVersionUE5\": " << std::stoul(FileVersionUE5, 0, 16) << ",\n";
+    std::cout << "\"FileVersionLicenseeUE4\": " << std::stoul(FileVersionLicenseeUE4, 0, 16) << ",\n";
+    std::cout << "\"CustomVersionsCount\": " << versions <<",\n";
+    std::cout << "\"Total Header Size\": " << HeaderSize << ",\n";
     unsigned long long FolderNameSize = stoul(info_finder(4, file), 0, 16);
     std::string FolderName = finder(FolderNameSize, file).substr(0, FolderNameSize * 2 - 2);
-    ss <<"\"FolderName\": " << hexToAscii(FolderName) << ",\n";
+    std::cout <<"\"FolderName\": " << hexToAscii(FolderName) << ",\n";
     std::string PackageFlags = info_finder(4, file);
-    ss << "\"PackageFlags\": " << stoul((PackageFlags), 0, 16) << ",\n";
+    std::cout << "\"PackageFlags\": " << stoul((PackageFlags), 0, 16) << ",\n";
     unsigned long long NameCount = stoi(info_finder(4, file), 0, 16);
-    ss << "\"NameCount\": " << NameCount <<",\n";
+    std::cout << "\"NameCount\": " << NameCount <<",\n";
     unsigned long long NameOffset = stoi(info_finder(4, file), 0, 16);
-    ss<< "\"NameOffset\": " << NameOffset << ",\n";
+    std::cout<< "\"NameOffset\": " << NameOffset << ",\n";
     long int pos = ftell(file);
     std::string Localisation_prefix = "21000000";
     bytes_detector(Localisation_prefix, pos, file);
     std::string LocalizationId = finder(32, file);
-    ss << "\"LocalisationID\": " << hexToAscii(LocalizationId) << ",\n";
+    std::cout << "\"LocalisationID\": " << hexToAscii(LocalizationId) << ",\n";
     fseek(file, ftell(file) + 1, SEEK_SET); // to skip the null byte
     unsigned long long GatherableTextDataCount = stoul(info_finder(4, file), 0, 16);
-    ss << "\"GatherableTextDataCount\": " << GatherableTextDataCount << ",\n";
+    std::cout << "\"GatherableTextDataCount\": " << GatherableTextDataCount << ",\n";
     unsigned long long GatherableTextDataOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"GatherableTextDataOffset\": " << GatherableTextDataOffset << ",\n";
+    std::cout << "\"GatherableTextDataOffset\": " << GatherableTextDataOffset << ",\n";
     unsigned long long ExportCount = stol(info_finder(4, file), 0, 16);
-    ss << "\"ExportCount\": " << ExportCount << ",\n";
+    std::cout << "\"ExportCount\": " << ExportCount << ",\n";
     unsigned long long ExportOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"ExportOffset\": " << ExportOffset << ",\n";
+    std::cout << "\"ExportOffset\": " << ExportOffset << ",\n";
     unsigned long long ImportCount= stoi(info_finder(4, file), 0, 16);
-    ss << "\"ImportCount\": " << ImportCount << ",\n";
+    std::cout << "\"ImportCount\": " << ImportCount << ",\n";
     unsigned long long ImportOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"ImportOffset\": " << ImportOffset << ",\n";
+    std::cout << "\"ImportOffset\": " << ImportOffset << ",\n";
     unsigned long DependsOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"DependsOffset\": " << DependsOffset << ",\n";
+    std::cout << "\"DependsOffset\": " << DependsOffset << ",\n";
     unsigned long SoftPackageReferencesCount= stoul(info_finder(4, file), 0, 16);
-    ss << "\"SoftPackageReferencesCount\": " << SoftPackageReferencesCount << ",\n";
+    std::cout << "\"SoftPackageReferencesCount\": " << SoftPackageReferencesCount << ",\n";
     unsigned long int SoftPackageReferencesOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"SoftPackageReferencesOffset\": " << SoftPackageReferencesOffset << ",\n";
+    std::cout << "\"SoftPackageReferencesOffset\": " << SoftPackageReferencesOffset << ",\n";
     unsigned long long SearchableNamesOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"SearchableNamesOffset\": " << SearchableNamesOffset <<",\n";
+    std::cout << "\"SearchableNamesOffset\": " << SearchableNamesOffset <<",\n";
     unsigned long ThumbnailTableOffset = stoul(info_finder(4, file), 0, 16);
-    ss << "\"ThumbnailTableOffset\": " << ThumbnailTableOffset << ",\n";
+    std::cout << "\"ThumbnailTableOffset\": " << ThumbnailTableOffset << ",\n";
     std::string GUID = finder(16, file);
-    ss << "\"GUID\": " << GUID << ",\n";
+    std::cout << "\"GUID\": " << GUID << ",\n";
     std::string PersistentGUID = finder(16, file);
-    ss << "\"PersistentGUID\": " << PersistentGUID << ",\n";
+    std::cout << "\"PersistentGUID\": " << PersistentGUID << ",\n";
+    long int GenerationsCount = stoi(info_finder(4, file), 0, 16);
+    std::cout << "\"GenerationsCount\": " << GenerationsCount << ",\n";
+    Generations(GenerationsCount, file);
+    SavedByEngineVersion_CompatibleWithEngineVersion(file);
 
+    std::string CompressedFlags = finder(4, file);
+    std::cout << "\"CompressedFlags\": " << CompressedFlags << ",\n";
+    long CompressedChunksCount = stol(info_finder(4, file)); // isko bhi formatting krni hai
+    std::cout << "\"CompressedChunksCount\": " << CompressedChunksCount << ",\n";
+    std::string PackageSource = info_finder(4, file);
+    std::cout << "\"PackageSource\": " << stoll((PackageSource), 0, 16) << ",\n";
+    fseek(file, ftell(file) + 4, SEEK_SET); // yaha pr shyd koi ek property hai. ya toh NumTexture Allocations hai ya AdditionalDatatoCook hai
+    unsigned long AssetRegistryDataOffset = stoll(info_finder(4, file), 0, 16);
+    std::cout << "\"AssetregistryDataOffset\": " << AssetRegistryDataOffset << ",\n";
+    unsigned long long BulkDataStartOffset = stoll(info_finder(8, file), 0, 16);
+    std::cout << "\"BulkDataStartOffset\": " << BulkDataStartOffset << ",\n";
+    unsigned long long WorlTileInfoDataOffset = stoll(info_finder(4, file), 0, 16);
+    std::cout << "\"WorlTileInfoDataOffset\": " << WorlTileInfoDataOffset << ",\n";
+    std::string ChunkIDs = finder(4, file); // ek baar ye chunk krke dekhna hai, isi byte pr milengi ids
+    std::cout << "\"ChunkIDs\": " << ChunkIDs << ",\n";
+    signed long PreloadDependencyCount = stoll(info_finder(4, file), 0, 16);
+    std::cout << "\"PreloadDependencyCount\": " << PreloadDependencyCount << ",\n";
+    unsigned long long PreloadDependencyOffset = stoll(info_finder(4, file), 0, 16);
+    std::cout << "\"PreloadDependencyOffset\": " << PreloadDependencyOffset <<",\n";
+    unsigned long NamesReferencedFromExportDataCount = stoll(info_finder(4, file), 0, 16);
+    std::cout << "\"NamesReferencedFromExportDataCount\": " << NamesReferencedFromExportDataCount << ",\n";
+    signed long long PayloadTocOffset = stoull(info_finder(8, file), 0, 16);
+    std::cout << "\"PayloadTocOffset\": " << PayloadTocOffset << ",\n";
 
-    ss << "}\n";
-    return ss.str();
+    std::cout << "}\n";
+    
 }
 
 
@@ -577,8 +618,8 @@ int main(int argc, char *argv[])
             unsigned long NamesReferencedFromExportDataCount;
             signed long long PayloadTocOffset;
 
-            std::string json_output = to_json(16, file);
-            std::cout << json_output << std::endl;
+           // std::string json_output = to_json(16, file);
+          to_json(16,file) ;
            
             
     
@@ -622,33 +663,34 @@ int main(int argc, char *argv[])
             // std::cout << "GUID: " << GUID << std::endl;
             // PersistentGUID = finder(16, file);
             // std::cout << "PersistentGUID: " << PersistentGUID << std::endl;
-            GenerationsCount = stoi(info_finder(4, file), 0, 16);
-            std::cout << "GenerationsCount: " << GenerationsCount << std::endl;
-            Generations(GenerationsCount, file);
-            SavedByEngineVersion_CompatibleWithEngineVersion(file);
-            CompressedFlags = finder(4, file);
-            std::cout << "CompressedFlags: " << CompressedFlags << std::endl;
-            CompressedChunksCount = stol(info_finder(4, file)); // isko bhi formatting krni hai
-            std::cout << "CompressedChunksCount: " << CompressedChunksCount << std::endl;
-            PackageSource = info_finder(4, file);
-            std::cout << "PackageSource: " << stoll((PackageSource), 0, 16) << std::endl;
-            fseek(file, ftell(file) + 4, SEEK_SET); // yaha pr shyd koi ek property hai. ya toh NumTexture Allocations hai ya AdditionalDatatoCook hai
-            AssetRegistryDataOffset = stoll(info_finder(4, file), 0, 16);
-            std::cout << "AssetregistryDataOffset: " << AssetRegistryDataOffset << std::endl;
-            BulkDataStartOffset = stoll(info_finder(8, file), 0, 16);
-            std::cout << "BulkDataStartOffset: " << BulkDataStartOffset << std::endl;
-            WorlTileInfoDataOffset = stoll(info_finder(4, file), 0, 16);
-            std::cout << "WorlTileInfoDataOffset: " << WorlTileInfoDataOffset << std::endl;
-            ChunkIDs = finder(4, file); // ek baar ye chunk krke dekhna hai, isi byte pr milengi ids
-            std::cout << "ChunkIDs: " << ChunkIDs << std::endl;
-            PreloadDependencyCount = stoll(info_finder(4, file), 0, 16);
-            std::cout << "PreloadDependencyCount: " << PreloadDependencyCount << std::endl;
-            PreloadDependencyOffset = stoll(info_finder(4, file), 0, 16);
-            std::cout << "PreloadDependencyOffset: " << PreloadDependencyOffset << std::endl;
-            NamesReferencedFromExportDataCount = stoll(info_finder(4, file), 0, 16);
-            std::cout << "NamesReferencedFromExportDataCount: " << NamesReferencedFromExportDataCount << std::endl;
-            PayloadTocOffset = stoull(info_finder(8, file), 0, 16);
-            std::cout << "PayloadTocOffset: " << PayloadTocOffset << std::endl;
+            // GenerationsCount = stoi(info_finder(4, file), 0, 16);
+            // std::cout << "GenerationsCount: " << GenerationsCount << std::endl;
+            // Generations(GenerationsCount, file);
+
+        //    // SavedByEngineVersion_CompatibleWithEngineVersion(file);
+        //     CompressedFlags = finder(4, file);
+        //     std::cout << "CompressedFlags: " << CompressedFlags << std::endl;
+        //     CompressedChunksCount = stol(info_finder(4, file)); // isko bhi formatting krni hai
+        //     std::cout << "CompressedChunksCount: " << CompressedChunksCount << std::endl;
+        //     PackageSource = info_finder(4, file);
+        //     std::cout << "PackageSource: " << stoll((PackageSource), 0, 16) << std::endl;
+        //     fseek(file, ftell(file) + 4, SEEK_SET); // yaha pr shyd koi ek property hai. ya toh NumTexture Allocations hai ya AdditionalDatatoCook hai
+        //     AssetRegistryDataOffset = stoll(info_finder(4, file), 0, 16);
+        //     std::cout << "AssetregistryDataOffset: " << AssetRegistryDataOffset << std::endl;
+        //     BulkDataStartOffset = stoll(info_finder(8, file), 0, 16);
+        //     std::cout << "BulkDataStartOffset: " << BulkDataStartOffset << std::endl;
+        //     WorlTileInfoDataOffset = stoll(info_finder(4, file), 0, 16);
+        //     std::cout << "WorlTileInfoDataOffset: " << WorlTileInfoDataOffset << std::endl;
+        //     ChunkIDs = finder(4, file); // ek baar ye chunk krke dekhna hai, isi byte pr milengi ids
+        //     std::cout << "ChunkIDs: " << ChunkIDs << std::endl;
+        //     PreloadDependencyCount = stoll(info_finder(4, file), 0, 16);
+        //     std::cout << "PreloadDependencyCount: " << PreloadDependencyCount << std::endl;
+        //     PreloadDependencyOffset = stoll(info_finder(4, file), 0, 16);
+        //     std::cout << "PreloadDependencyOffset: " << PreloadDependencyOffset << std::endl;
+        //     NamesReferencedFromExportDataCount = stoll(info_finder(4, file), 0, 16);
+        //     std::cout << "NamesReferencedFromExportDataCount: " << NamesReferencedFromExportDataCount << std::endl;
+        //     PayloadTocOffset = stoull(info_finder(8, file), 0, 16);
+        //     std::cout << "PayloadTocOffset: " << PayloadTocOffset << std::endl;
 
             Thumbnails(ThumbnailTableOffset, file);
             std::cout << "=============Names========" << std::endl;
