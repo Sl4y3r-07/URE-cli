@@ -324,29 +324,29 @@ void SoftPackageReferences(long int Offset, long int count, FILE *file) {
     fseek(file, Offset, SEEK_SET);
 
     std::stringstream ss;
-   
-    ss << "\"SoftPackageReferences\": [\n";
+    
+    std::cout << "\"SoftPackageReferences\": [\n";
 
     if (count != 0) {
         for (long int i = 0; i < count; i++) {
             nameIndex = stoull(info_finder(8, file), 0, 16);
 
-            ss << "\t{\n";
-            ss << "\t\t\"nameIndex\": " << nameIndex << ",\n";
-            ss << "\t\t\"Name\": \"" << Names[nameIndex] << "\"\n";
-            ss << "\t}";
+            std::cout << "\t{\n";
+            std::cout << "\t\t\"nameIndex\": " << nameIndex << ",\n";
+            std::cout << "\t\t\"Name\": \"" << Names[nameIndex] << "\"\n";
+            std::cout << "\t}";
             if (i < count - 1) {
-                ss << ",";
+                std::cout << ",";
             }
-            ss << "\n";
+            std::cout << "\n";
         }
     } else {
-        ss << "\t{\n";
-        ss << "\t\t\"NoSoftPackageReferences\": true\n";
-        ss << "\t}\n";
+        std::cout << "\t{\n";
+        std::cout << "\t\t\"NoSoftPackageReferences\": true\n";
+        std::cout << "\t}\n";
     }
 
-    ss << "]\n";
+    std::cout << "]\n";
    
 }
 
