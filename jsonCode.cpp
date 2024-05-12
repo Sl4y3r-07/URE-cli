@@ -442,20 +442,7 @@ void Exports(long long Offset, long long count, FILE *file)
     }
 }
 
-// void generateJSONdata() {
-//     rapidjson::Document d;
-//     d.SetObject();
-//     FILE* file;
-//     char* buffer  = new char();
 
-//     d.AddMember("Name: ", "Mark", d.GetAllocator());
-//     d.AddMember("Agr: ", "30", d.GetAllocator());
-//     file = fopen("result.json", "w");
-
-//     rapidjson::FileWriteStream os(file, buffer, sizeof(buffer));
-//     rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
-//     d.Accept(writer);
-// }
 
     std::string to_json(int header_length, FILE* file) {
     std::stringstream ss;
@@ -485,10 +472,50 @@ void Exports(long long Offset, long long count, FILE *file)
     ss << "\"FileVersionUE4\": " << std::stoi(little_to_big_endian(FileVersionUE4), 0, 16) << ",\n";
     ss << "\"FileVersionUE5\": " << std::stoul(FileVersionUE5, 0, 16) << ",\n";
     ss << "\"FileVersionLicenseeUE4\": " << std::stoul(FileVersionLicenseeUE4, 0, 16) << ",\n";
-    ss << "\"CustomVersionsCount\": " << versions <<"\n";
-    ss << "\"Total Header Size\": " << HeaderSize << std::endl;
+    ss << "\"CustomVersionsCount\": " << versions <<",\n";
+    ss << "\"Total Header Size\": " << HeaderSize << ",\n";
+    unsigned long long FolderNameSize = stoul(info_finder(4, file), 0, 16);
+    std::string FolderName = finder(FolderNameSize, file).substr(0, FolderNameSize * 2 - 2);
+    ss <<"\"FolderName\": " << hexToAscii(FolderName) << ",\n";
+    std::string PackageFlags = info_finder(4, file);
+    ss << "\"PackageFlags\": " << stoul((PackageFlags), 0, 16) << ",\n";
+    unsigned long long NameCount = stoi(info_finder(4, file), 0, 16);
+    ss << "\"NameCount\": " << NameCount <<",\n";
+    unsigned long long NameOffset = stoi(info_finder(4, file), 0, 16);
+    ss<< "\"NameOffset\": " << NameOffset << ",\n";
+    long int pos = ftell(file);
+    std::string Localisation_prefix = "21000000";
+    bytes_detector(Localisation_prefix, pos, file);
+    std::string LocalizationId = finder(32, file);
+    ss << "\"LocalisationID\": " << hexToAscii(LocalizationId) << ",\n";
+    fseek(file, ftell(file) + 1, SEEK_SET); // to skip the null byte
+    unsigned long long GatherableTextDataCount = stoul(info_finder(4, file), 0, 16);
+    ss << "\"GatherableTextDataCount\": " << GatherableTextDataCount << ",\n";
+    unsigned long long GatherableTextDataOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"GatherableTextDataOffset\": " << GatherableTextDataOffset << ",\n";
+    unsigned long long ExportCount = stol(info_finder(4, file), 0, 16);
+    ss << "\"ExportCount\": " << ExportCount << ",\n";
+    unsigned long long ExportOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"ExportOffset\": " << ExportOffset << ",\n";
+    unsigned long long ImportCount= stoi(info_finder(4, file), 0, 16);
+    ss << "\"ImportCount\": " << ImportCount << ",\n";
+    unsigned long long ImportOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"ImportOffset\": " << ImportOffset << ",\n";
+    unsigned long DependsOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"DependsOffset\": " << DependsOffset << ",\n";
+    unsigned long SoftPackageReferencesCount= stoul(info_finder(4, file), 0, 16);
+    ss << "\"SoftPackageReferencesCount\": " << SoftPackageReferencesCount << ",\n";
+    unsigned long int SoftPackageReferencesOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"SoftPackageReferencesOffset\": " << SoftPackageReferencesOffset << ",\n";
+    unsigned long long SearchableNamesOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"SearchableNamesOffset\": " << SearchableNamesOffset <<",\n";
+    unsigned long ThumbnailTableOffset = stoul(info_finder(4, file), 0, 16);
+    ss << "\"ThumbnailTableOffset\": " << ThumbnailTableOffset << ",\n";
+    std::string GUID = finder(16, file);
+    ss << "\"GUID\": " << GUID << ",\n";
+    std::string PersistentGUID = finder(16, file);
+    ss << "\"PersistentGUID\": " << PersistentGUID << ",\n";
 
-   
 
     ss << "}\n";
     return ss.str();
@@ -556,56 +583,45 @@ int main(int argc, char *argv[])
             
     
 
-           // unsigned long long versionKeylength = versions * 16;
-          //  unsigned long long total_version_bytes_length = versions * 4;
-         //   int totalCustomVersionLength = versionKeylength + total_version_bytes_length;
-           // fseek(file, ftell(file) + totalCustomVersionLength, SEEK_SET);
-            // ftell(file);
+            // PackageFlags = info_finder(4, file);
+            // std::cout << "PackageFlags: " << stoul((PackageFlags), 0, 16) << std::endl;
+            // NameCount = stoi(info_finder(4, file), 0, 16);
+            // std::cout << "NameCount: " << NameCount << std::endl;
+            // NameOffset = stoi(info_finder(4, file), 0, 16);
+            // std::cout << "NameOffset: " << NameOffset << std::endl;
+            // long int pos = ftell(file);
+            // std::string Localisation_prefix = "21000000";
+            // bytes_detector(Localisation_prefix, pos, file);
+            // LocalizationId = finder(32, file);
+            // std::cout << "LocalisationID: " << hexToAscii(LocalizationId) << std::endl;
 
-            // HeaderSize = stoul(info_finder(4, file), 0, 16);
-            //std::cout << "Total Header Size: " << HeaderSize << std::endl;
-            unsigned long long FolderNameSize = stoul(info_finder(4, file), 0, 16);
-            FolderName = finder(FolderNameSize, file).substr(0, FolderNameSize * 2 - 2);
-            std::cout << "FolderName: " << hexToAscii(FolderName) << std::endl;
-            PackageFlags = info_finder(4, file);
-            std::cout << "PackageFlags: " << stoul((PackageFlags), 0, 16) << std::endl;
-            NameCount = stoi(info_finder(4, file), 0, 16);
-            std::cout << "NameCount: " << NameCount << std::endl;
-            NameOffset = stoi(info_finder(4, file), 0, 16);
-            std::cout << "NameOffset: " << NameOffset << std::endl;
-            long int pos = ftell(file);
-            std::string Localisation_prefix = "21000000";
-            bytes_detector(Localisation_prefix, pos, file);
-            LocalizationId = finder(32, file);
-            std::cout << "LocalisationID: " << hexToAscii(LocalizationId) << std::endl;
-
-            fseek(file, ftell(file) + 1, SEEK_SET); // to skip the null byte
-            GatherableTextDataCount = stoul(info_finder(4, file), 0, 16);
-            std::cout << "GatherableTextDataCount: " << GatherableTextDataCount << std::endl;
-            GatherableTextDataOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "GatherableTextDataOffset: " << GatherableTextDataOffset << std::endl;
-            ExportCount = stol(info_finder(4, file), 0, 16);
-            std::cout << "ExportCount: " << ExportCount << std::endl;
-            ExportOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "ExportOffset: " << ExportOffset << std::endl;
-            ImportCount = stoi(info_finder(4, file), 0, 16);
-            std::cout << "ImportCount: " << ImportCount << std::endl;
-            ImportOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "ImportOffset: " << ImportOffset << std::endl;
-            DependsOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "DependsOffset: " << DependsOffset << std::endl;
-            SoftPackageReferencesCount = stoul(info_finder(4, file), 0, 16);
-            std::cout << "SoftPackageReferencesCount: " << SoftPackageReferencesCount << std::endl;
-            SoftPackageReferencesOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "SoftPackageReferencesOffset: " << SoftPackageReferencesOffset << std::endl;
-            SearchableNamesOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "SearchableNamesOffset: " << SearchableNamesOffset << std::endl;
-            ThumbnailTableOffset = stoul(info_finder(4, file), 0, 16);
-            std::cout << "ThumbnailTableOffset: " << ThumbnailTableOffset << std::endl;
-            GUID = finder(16, file);
-            std::cout << "GUID: " << GUID << std::endl;
-            PersistentGUID = finder(16, file);
-            std::cout << "PersistentGUID: " << PersistentGUID << std::endl;
+            // fseek(file, ftell(file) + 1, SEEK_SET); // to skip the null byte
+            // GatherableTextDataCount = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "GatherableTextDataCount: " << GatherableTextDataCount << std::endl;
+            // GatherableTextDataOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "GatherableTextDataOffset: " << GatherableTextDataOffset << std::endl;
+            // ExportCount = stol(info_finder(4, file), 0, 16);
+            // std::cout << "ExportCount: " << ExportCount << std::endl;
+            // ExportOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "ExportOffset: " << ExportOffset << std::endl;
+            // ImportCount = stoi(info_finder(4, file), 0, 16);
+            // std::cout << "ImportCount: " << ImportCount << std::endl;
+            // ImportOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "ImportOffset: " << ImportOffset << std::endl;
+            // DependsOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "DependsOffset: " << DependsOffset << std::endl;
+            // SoftPackageReferencesCount = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "SoftPackageReferencesCount: " << SoftPackageReferencesCount << std::endl;
+            // SoftPackageReferencesOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "SoftPackageReferencesOffset: " << SoftPackageReferencesOffset << std::endl;
+            // SearchableNamesOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "SearchableNamesOffset: " << SearchableNamesOffset << std::endl;
+            // ThumbnailTableOffset = stoul(info_finder(4, file), 0, 16);
+            // std::cout << "ThumbnailTableOffset: " << ThumbnailTableOffset << std::endl;
+            // GUID = finder(16, file);
+            // std::cout << "GUID: " << GUID << std::endl;
+            // PersistentGUID = finder(16, file);
+            // std::cout << "PersistentGUID: " << PersistentGUID << std::endl;
             GenerationsCount = stoi(info_finder(4, file), 0, 16);
             std::cout << "GenerationsCount: " << GenerationsCount << std::endl;
             Generations(GenerationsCount, file);
