@@ -131,7 +131,7 @@ void printNames(unsigned long long NameOffset, unsigned long long NameCount, FIL
     
     ss << "\"Names\": [\n";
 
-    std::vector<std::string> Names;
+    
 
     for (int i = 0; i < NameCount; i++) {
         std::string name;
